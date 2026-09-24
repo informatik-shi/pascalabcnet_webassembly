@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; worker-src 'self'; connect-src 'self'; style-src 'self'; img-src 'self' data:">
+  <title>PascalABC.NET Web</title>
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+  <header>
+    <div><strong>PascalABC.NET Web</strong><span id="version">загрузка runtime…</span></div>
+    <nav><button id="mode-run" class="active">Запуск</button><button id="mode-task">Задание</button></nav>
+  </header>
+  <main>
+    <section id="task" hidden>
+      <h2>Задание</h2>
+      <p>Напишите программу, которая получает два целых числа и выводит их сумму.</p>
+    </section>
+    <div class="workspace">
+      <label>Код<textarea id="code" spellcheck="false">begin
+  var a := ReadInteger;
+  var b := ReadInteger;
+  Println(a + b);
+end.</textarea></label>
+      <label>Ввод<textarea id="input" spellcheck="false">20
+22</textarea></label>
+    </div>
+    <div class="actions">
+      <button id="run" class="primary">▶ Run <kbd>Ctrl+Enter</kbd></button>
+      <button id="check" hidden>Проверить</button>
+      <button id="stop">■ Stop</button>
+      <span id="status"></span>
+    </div>
+    <section>
+      <h2>Вывод</h2>
+      <pre id="output" aria-live="polite"></pre>
+    </section>
+    <section id="diagnostics" hidden><h2>Диагностика</h2><ol></ol></section>
+    <section id="tests" hidden><h2>Тесты</h2><ol></ol></section>
+  </main>
+  <script type="module" src="./app.js"></script>
+</body>
+</html>

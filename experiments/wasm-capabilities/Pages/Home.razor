@@ -1,0 +1,16 @@
+@page "/"
+@inject HttpClient HttpClient
+
+<PageTitle>PascalABC.NET browser compiler probe</PageTitle>
+
+<h1>PascalABC.NET browser compiler probe</h1>
+<pre id="capability-result">@result</pre>
+
+@code {
+    private string result = "loading compiler assets";
+
+    protected override async Task OnInitializedAsync()
+    {
+        result = await CompilerProbe.RunAsync(HttpClient);
+    }
+}

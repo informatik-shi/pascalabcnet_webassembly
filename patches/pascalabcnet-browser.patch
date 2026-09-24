@@ -1,0 +1,317 @@
+diff --git a/Compiler/Compiler.cs b/Compiler/Compiler.cs
+index b33cc667..763d10f6 100644
+--- a/Compiler/Compiler.cs
++++ b/Compiler/Compiler.cs
+@@ -2096,11 +2096,19 @@ namespace PascalABCCompiler
+             return null;
+         }
+ 
+-        public static string GetReferenceFileName(string FileName, string curr_path = null)
+-        {
+-            // Вначале - кешированные стандартные dll
+-            if (standart_assembly_dict.ContainsKey(FileName))
+-                return standart_assembly_dict[FileName];
++        public static string GetReferenceFileName(string FileName, string curr_path = null)
++        {
++            // Вначале - кешированные стандартные dll
++            if (standart_assembly_dict.ContainsKey(FileName))
++            {
++                string standardPath = standart_assembly_dict[FileName];
++                if (standardPath == null)
++                {
++                    standardPath = get_standart_assembly_path(FileName);
++                    standart_assembly_dict[FileName] = standardPath;
++                }
++                return standardPath;
++            }
+             if (curr_path != null && System.IO.File.Exists(Path.Combine(curr_path, FileName)))
+                 return Path.Combine(curr_path, FileName);
+             if (System.IO.File.Exists(FileName))
+@@ -2121,7 +2129,15 @@ namespace PascalABCCompiler
+             if (!CheckPathValid(FileName))
+                 throw new InvalidAssemblyPathError(currentCompilationUnit.SyntaxTree.file_name, sc);
+             if (standart_assembly_dict.ContainsKey(FileName))
+-                return standart_assembly_dict[FileName];
++            {
++                string standardPath = standart_assembly_dict[FileName];
++                if (standardPath == null)
++                {
++                    standardPath = get_standart_assembly_path(FileName);
++                    standart_assembly_dict[FileName] = standardPath;
++                }
++                return standardPath;
++            }
+ 
+             // Наверное, этот код MikhailoMMX лишний
+             //MikhailoMMX PABCRtl.dll будем искать сначала в GAC, а потом в папке с программой
+@@ -3879,7 +3895,22 @@ namespace PascalABCCompiler
+                             if (cun11 != null)
+                                 UnitsLogicallySortedList.AddElement(cun11);*/
+ 
+-        static string standartAssemblyPath = Path.GetDirectoryName(System.Reflection.Assembly.GetAssembly(typeof(string)).ManifestModule.FullyQualifiedName);
++        private static string get_standart_assembly_directory()
++        {
++            string path = Path.GetDirectoryName(System.Reflection.Assembly.GetAssembly(typeof(string)).ManifestModule.FullyQualifiedName);
++#if PABCNET_MODERN
++            // Browser-hosted .NET assemblies do not have physical Location paths.
++            // The host stages the runtime metadata files in its virtual file system
++            // and publishes that directory through NetCoreSystemReferences.
++            if (string.IsNullOrEmpty(path))
++                path = NetHelper.NetCoreSystemReferences.RuntimeDirectory;
++#endif
++            // Keep path-oriented compatibility probes safe even if this type is
++            // initialized before a browser host has installed its runtime override.
++            return string.IsNullOrEmpty(path) ? Environment.CurrentDirectory : path;
++        }
++
++        static string standartAssemblyPath = get_standart_assembly_directory();
+ 
+         public static Dictionary<string, string> standart_assembly_dict = new Dictionary<string, string>();
+         static Compiler()
+@@ -3888,19 +3919,34 @@ namespace PascalABCCompiler
+             foreach (var x in ss)
+                 standart_assembly_dict[x] = get_standart_assembly_path(x);
+         }
+-        public static string get_standart_assembly_path(string name)
+-        {
++        public static string get_standart_assembly_path(string name)
++        {
+             name = name.Replace("%GAC%\\", "");
+             string ttn = System.IO.Path.GetFileNameWithoutExtension(name);
++#if PABCNET_MODERN
++            string browserRuntimeDirectory = NetHelper.NetCoreSystemReferences.RuntimeDirectory;
++            if (!string.IsNullOrEmpty(browserRuntimeDirectory))
++            {
++                string runtimePath = Path.Combine(browserRuntimeDirectory, name);
++                if (File.Exists(runtimePath))
++                    return runtimePath;
++            }
++#endif
+             string tn = get_windows_desktop_assembly_path(name);
+             if (tn != null)
+                 return tn;
+             tn = Path.Combine(standartAssemblyPath, name);
+             if (File.Exists(tn))
+                 return tn;
+-            if (Environment.OSVersion.Platform != PlatformID.Unix && Environment.OSVersion.Platform != PlatformID.MacOSX)
+-            {
+-                string windir = Path.Combine(Environment.GetEnvironmentVariable("windir"), "Microsoft.NET");
++            if (Environment.OSVersion.Platform != PlatformID.Unix && Environment.OSVersion.Platform != PlatformID.MacOSX)
++            {
++                string windowsDirectory = Environment.GetEnvironmentVariable("windir");
++                // A browser runtime can report a non-Unix platform while having
++                // no Windows directory or GAC at all.
++                if (string.IsNullOrEmpty(windowsDirectory))
++                    return null;
++
++                string windir = Path.Combine(windowsDirectory, "Microsoft.NET");
+                 tn = windir + @"\assembly\GAC_MSIL\";
+                 tn += ttn + "\\";
+                 System.IO.DirectoryInfo di = new System.IO.DirectoryInfo(tn);
+@@ -3973,6 +4019,9 @@ namespace PascalABCCompiler
+ 
+         private static string get_windows_desktop_assembly_path(string name)
+         {
++            if (string.IsNullOrEmpty(standartAssemblyPath))
++                return null;
++
+             var runtimeVersionDirectory = new DirectoryInfo(standartAssemblyPath);
+             var runtimeDirectory = runtimeVersionDirectory.Parent;
+             var sharedDirectory = runtimeDirectory?.Parent;
+diff --git a/Compiler/SemanticTreeConverters/SemanticTreeConvertersController.cs b/Compiler/SemanticTreeConverters/SemanticTreeConvertersController.cs
+index c9185b81..81cbf55a 100644
+--- a/Compiler/SemanticTreeConverters/SemanticTreeConvertersController.cs
++++ b/Compiler/SemanticTreeConverters/SemanticTreeConvertersController.cs
+@@ -39,6 +39,11 @@ namespace PascalABCCompiler.SemanticTreeConverters
+         }
+         private void AddConverters(string DirectoryName)
+         {
++            // Dynamic converter discovery is optional. Browser-hosted assemblies
++            // have no physical directory and therefore cannot be scanned here.
++            if (string.IsNullOrEmpty(DirectoryName) || !Directory.Exists(DirectoryName))
++                return;
++
+             DirectoryInfo di = new DirectoryInfo(DirectoryName);
+ 
+             // динамически подключаемые конверторы. Не очень устойчивая конструкция!!!
+diff --git a/TreeConverter/NetWrappers/NetCoreSystemReferences.cs b/TreeConverter/NetWrappers/NetCoreSystemReferences.cs
+index 7e4ce8f6..68220b38 100644
+--- a/TreeConverter/NetWrappers/NetCoreSystemReferences.cs
++++ b/TreeConverter/NetWrappers/NetCoreSystemReferences.cs
+@@ -47,6 +47,7 @@ namespace PascalABCCompiler.NetHelper
+             new ConcurrentDictionary<string, Lazy<IReadOnlyList<string>>>(StringComparer.OrdinalIgnoreCase);
+         private static readonly ConcurrentDictionary<string, Lazy<IReadOnlyList<string>>> facadeCache =
+             new ConcurrentDictionary<string, Lazy<IReadOnlyList<string>>>(StringComparer.OrdinalIgnoreCase);
++        private static string runtimeDirectoryOverride;
+ 
+         public static IReadOnlyList<string> RootAssemblyNames
+         {
+@@ -55,7 +56,32 @@ namespace PascalABCCompiler.NetHelper
+ 
+         public static string RuntimeDirectory
+         {
+-            get { return Path.GetDirectoryName(typeof(object).Assembly.Location); }
++            get
++            {
++                string assemblyLocation = typeof(object).Assembly.Location;
++                if (!string.IsNullOrEmpty(assemblyLocation))
++                    return Path.GetDirectoryName(assemblyLocation);
++
++                if (!string.IsNullOrEmpty(runtimeDirectoryOverride))
++                    return runtimeDirectoryOverride;
++
++                return AppContext.GetData("PascalABC.NetCoreRuntimeDirectory") as string;
++            }
++        }
++
++        /// <summary>
++        /// Overrides the runtime metadata directory for hosts where managed assemblies
++        /// have no physical Location, such as .NET WebAssembly in a browser.
++        /// </summary>
++        public static string RuntimeDirectoryOverride
++        {
++            get { return runtimeDirectoryOverride; }
++            set
++            {
++                runtimeDirectoryOverride = value;
++                cache.Clear();
++                facadeCache.Clear();
++            }
+         }
+ 
+         public static IReadOnlyList<string> AssemblyPaths
+diff --git a/bin/Lib/PABCSystem.pas b/bin/Lib/PABCSystem.pas
+index 177b9c6c..876fc906 100644
+--- a/bin/Lib/PABCSystem.pas
++++ b/bin/Lib/PABCSystem.pas
+@@ -6673,9 +6673,19 @@ end;
+ //          IOStandardSystem: implementation
+ // -----------------------------------------------------
+ 
++var
++  _HostedInput: TextReader;
++  _HostedOutput: TextWriter;
++  _HostedInputChanged := False;
++
+ constructor IOStandardSystem.Create;
+ begin
+-  tr := Console.In; 
++  _HostedInput := AppDomain.CurrentDomain.GetData('PascalABC.Web.stdin') as TextReader;
++  _HostedOutput := AppDomain.CurrentDomain.GetData('PascalABC.Web.stdout') as TextWriter;
++  if _HostedInput <> nil then
++    tr := _HostedInput
++  else
++    tr := Console.In;
+   //buf := new char[buflen]; - теперь при объявлении поля
+ end;
+ 
+@@ -6684,6 +6694,13 @@ const
+ 
+ procedure IOStandardSystem.ReadNextBuf;
+ begin
++  if _HostedInputChanged then
++  begin
++    tr := _HostedInput;
++    realbuflen := -1;
++    pos := 0;
++    _HostedInputChanged := False;
++  end;
+   realbuflen := tr.Read{Block}(buf, 0, buflen); // SSM 29/03/22 #2647
+   if realbuflen < buflen then
+     buf[realbuflen] := char(-1);
+@@ -6705,6 +6722,18 @@ var
+ 
+ function IsInputPipedOrRedirectedFromFile: boolean;
+ begin
++  var configuredInput := AppDomain.CurrentDomain.GetData('PascalABC.Web.stdin') as TextReader;
++  if configuredInput <> nil then
++  begin
++    if configuredInput <> _HostedInput then
++    begin
++      _HostedInput := configuredInput;
++      _HostedInputChanged := True;
++    end;
++    Result := True;
++    exit;
++  end;
++
+   if _IsPipedRedirectedQuery then
+     Result := _IsPipedRedirected
+   else 
+@@ -6729,7 +6758,7 @@ function IOStandardSystem.peek: integer;// +
+ begin
+   if IsInputPipedOrRedirectedFromFile then
+   begin// новый код
+-    if pos >= realbuflen then
++    if _HostedInputChanged or (pos >= realbuflen) then
+       ReadNextBuf;
+     Result := integer(buf[pos]);
+   end
+@@ -6757,7 +6786,7 @@ function IOStandardSystem.read_symbol: char;// +
+ begin
+   if IsInputPipedOrRedirectedFromFile then
+   begin// новый код
+-    if pos >= realbuflen then
++    if _HostedInputChanged or (pos >= realbuflen) then
+       ReadNextBuf;
+     Result := buf[pos];
+     if Result <> m then
+@@ -6795,6 +6824,8 @@ begin
+   end;}
+   if IsInputPipedOrRedirectedFromFile then
+   begin// новый код
++    if _HostedInputChanged then
++      ReadNextBuf;
+     {var sb := new StringBuilder(10); // старый новый код
+     var c: char;
+     repeat
+@@ -7131,9 +7162,15 @@ end;}
+ 
+ procedure IOStandardSystem.write(obj: object);
+ begin
+-  if not console_alloc then
+-    AllocConsole;
+-  Console.Write(ObjectToString(obj));  
++  var configuredOutput := AppDomain.CurrentDomain.GetData('PascalABC.Web.stdout') as TextWriter;
++  if configuredOutput <> nil then
++    configuredOutput.Write(ObjectToString(obj))
++  else
++  begin
++    if not console_alloc then
++      AllocConsole;
++    Console.Write(ObjectToString(obj));
++  end;
+ end;
+ 
+ procedure IOStandardSystem.write(p: pointer);
+@@ -7143,9 +7180,15 @@ end;
+ 
+ procedure IOStandardSystem.writeln;
+ begin
+-  if not console_alloc then
+-    AllocConsole;
+-  Console.WriteLine;
++  var configuredOutput := AppDomain.CurrentDomain.GetData('PascalABC.Web.stdout') as TextWriter;
++  if configuredOutput <> nil then
++    configuredOutput.WriteLine
++  else
++  begin
++    if not console_alloc then
++      AllocConsole;
++    Console.WriteLine;
++  end;
+   System.Diagnostics.Debug.WriteLine('');
+ end;
+ 
+@@ -17450,7 +17493,10 @@ begin
+     defaultCulture.SetValue(nil, new System.Globalization.CultureInfo('en-US'), nil);
+   input := new TextFile();
+   output := new TextFile();
+-  output.sw := Console.Out;
++  if _HostedOutput <> nil then
++    output.sw := _HostedOutput
++  else
++    output.sw := Console.Out;
+   ErrOutput := new TextFile();
+   ErrOutput.sw := Console.Error;
+ 

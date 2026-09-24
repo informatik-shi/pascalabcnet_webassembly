@@ -1,0 +1,37 @@
+{
+  "name": "pascalabc-web",
+  "version": "0.1.0",
+  "description": "Official PascalABC.NET compiler and runtime in a browser Web Worker",
+  "type": "module",
+  "main": "./dist/pascalabc-web.js",
+  "module": "./dist/pascalabc-web.js",
+  "types": "./dist/pascalabc-web.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/pascalabc-web.d.ts",
+      "import": "./dist/pascalabc-web.js"
+    },
+    "./dist/*": "./dist/*"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE",
+    "THIRD_PARTY_NOTICES.md"
+  ],
+  "scripts": {
+    "build": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build.ps1",
+    "serve": "node scripts/serve-static.mjs . 8080"
+  },
+  "keywords": [
+    "pascal",
+    "pascalabc.net",
+    "webassembly",
+    "education",
+    "compiler"
+  ],
+  "license": "SEE LICENSE IN THIRD_PARTY_NOTICES.md",
+  "engines": {
+    "node": ">=20"
+  }
+}

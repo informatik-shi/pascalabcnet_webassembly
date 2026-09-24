@@ -1,0 +1,64 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+upstream_root="$repo_root/upstream/pascalabcnet"
+browser_patch="$repo_root/patches/pascalabcnet-browser.patch"
+configuration="${CONFIGURATION:-Release}"
+dotnet_cmd="${DOTNET_CMD:-dotnet}"
+export DOTNET_CLI_HOME="${DOTNET_CLI_HOME:-$repo_root/.dotnet-home}"
+export NUGET_PACKAGES="${NUGET_PACKAGES:-$repo_root/.nuget/packages}"
+export DOTNET_CLI_TELEMETRY_OPTOUT=1
+mkdir -p "$DOTNET_CLI_HOME" "$NUGET_PACKAGES"
+
+reset_generated_directory() {
+  local requested="$1"
+  local target
+  mkdir -p -- "$(dirname "$requested")"
+  target="$(cd "$(dirname "$requested")" && pwd -P)/$(basename "$requested")"
+  case "$target" in
+    "$repo_root"/*) ;;
+    *) echo "Refusing to reset a directory outside the repository: $target" >&2; exit 1 ;;
+  esac
+  rm -rf -- "$target"
+  mkdir -p -- "$target"
+}
+
+if [[ ! -f "$upstream_root/Compiler/Compiler.csproj" ]]; then
+  git -C "$repo_root" submodule update --init --recursive
+fi
+if git -C "$upstream_root" apply --ignore-space-change --check "$browser_patch" 2>/dev/null; then
+  git -C "$upstream_root" apply --ignore-space-change "$browser_patch"
+elif ! git -C "$upstream_root" apply --ignore-space-change --check --reverse "$browser_patch" 2>/dev/null; then
+  echo "The PascalABC.NET browser patch cannot be applied cleanly." >&2
+  exit 1
+fi
+
+"$dotnet_cmd" build "$upstream_root/pabcnetc.sln" -c "$configuration" -p:TargetFramework=net10.0 -m:1
+cp "$upstream_root/bin/Lib/PABCSystem.pas" "$upstream_root/bin-net10/Lib/PABCSystem.pas"
+cp "$upstream_root/bin/Lib/PABCExtensions.pas" "$upstream_root/bin-net10/Lib/PABCExtensions.pas"
+
+bootstrap_dir="$repo_root/artifacts/bootstrap"
+reset_generated_directory "$bootstrap_dir"
+cp "$repo_root/tests/programs/01_hello.pas" "$bootstrap_dir/bootstrap.pas"
+"$dotnet_cmd" "$upstream_root/bin-net10/pabcnetc.dll" "$bootstrap_dir/bootstrap.pas" /rebuild /noconsole
+
+asset_dir="$repo_root/src/PascalABC.Web.Runtime/wwwroot/pabc-assets"
+reset_generated_directory "$asset_dir"
+"$dotnet_cmd" run --project "$repo_root/tools/AssetStager/AssetStager.csproj" -c "$configuration" -- "$upstream_root/bin-net10" "$asset_dir"
+"$dotnet_cmd" publish "$repo_root/src/PascalABC.Web.Runtime/PascalABC.Web.Runtime.csproj" -c "$configuration"
+
+publish_dir="$repo_root/src/PascalABC.Web.Runtime/bin/$configuration/net10.0/publish/wwwroot"
+dist_dir="$repo_root/dist"
+reset_generated_directory "$dist_dir"
+cp -R "$publish_dir/." "$dist_dir/"
+find "$dist_dir" -type f -name '*.gz' -delete
+cp "$repo_root/js/pascalabc-web.js" "$repo_root/js/pascalabc-worker.js" "$repo_root/js/pascalabc-web.d.ts" "$dist_dir/"
+mkdir -p "$dist_dir/licenses"
+cp "$upstream_root/doc/License_en.txt" "$dist_dir/licenses/PascalABC.NET-LICENSE.txt"
+
+find "$dist_dir" -maxdepth 2 -type f \( -name 'pascalabc-*.js' -o -name 'dotnet.native*.wasm' \) -print | while IFS= read -r file; do
+  bytes="$(wc -c < "$file" | tr -d ' ')"
+  printf '%s %s bytes\n' "${file#"$dist_dir/"}" "$bytes"
+done
+echo "Build complete: $dist_dir"

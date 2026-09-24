@@ -1,0 +1,3 @@
+begin
+  Writeln('line');
+end.
