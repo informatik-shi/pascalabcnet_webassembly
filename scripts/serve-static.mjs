@@ -15,32 +15,53 @@ const mime = {
 };
 
 createServer((request, response) => {
-  const requestPath = decodeURIComponent(new URL(request.url, "http://localhost").pathname);
-  const relativePath = normalize(requestPath).replace(/^([/\\])+/, "");
-  let filePath = resolve(join(root, relativePath));
-
-  if (filePath !== root && !filePath.startsWith(`${root}${sep}`)) {
-    response.writeHead(403).end("Forbidden");
-    return;
-  }
-
   try {
+    const requestPath = decodeURIComponent(new URL(request.url, "http://localhost").pathname);
+    if (requestPath === "/") {
+      response.writeHead(302, {
+        "Location": "/demo/",
+        "Cache-Control": "no-store"
+      }).end();
+      return;
+    }
+
+    const relativePath = normalize(requestPath).replace(/^([/\\])+/, "");
+    let filePath = resolve(join(root, relativePath));
+
+    if (filePath !== root && !filePath.startsWith(`${root}${sep}`)) {
+      response.writeHead(403).end("Forbidden");
+      return;
+    }
+
     if (statSync(filePath).isDirectory()) filePath = join(filePath, "index.html");
+    if (!statSync(filePath).isFile()) throw new Error("Not a file");
+
     let contentEncoding = extname(filePath) === ".br" ? "br" : undefined;
     let sourceExtension = contentEncoding ? extname(filePath.slice(0, -3)) : extname(filePath);
     if (!contentEncoding && request.headers["accept-encoding"]?.includes("br") && existsSync(`${filePath}.br`)) {
       filePath = `${filePath}.br`;
       contentEncoding = "br";
     }
+    if (!statSync(filePath).isFile()) throw new Error("Not a file");
+
     response.writeHead(200, {
       "Content-Type": mime[sourceExtension] ?? "application/octet-stream",
       ...(contentEncoding ? { "Content-Encoding": contentEncoding } : {}),
       "Vary": "Accept-Encoding",
       "Cache-Control": "no-store"
     });
-    createReadStream(filePath).pipe(response);
+
+    if (request.method === "HEAD") {
+      response.end();
+      return;
+    }
+
+    const stream = createReadStream(filePath);
+    stream.on("error", () => response.end());
+    stream.pipe(response);
   } catch {
-    response.writeHead(404).end("Not found");
+    if (!response.headersSent) response.writeHead(404);
+    response.end("Not found");
   }
 }).listen(port, "127.0.0.1", () => {
   process.stdout.write(`serving ${root} on http://127.0.0.1:${port}\n`);
