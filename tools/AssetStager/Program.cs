@@ -45,7 +45,9 @@ foreach (var fileName in new[]
              "GraphWPF.pcu",
              "GraphWPF.pas",
              "Graph3D.pcu",
-             "Graph3D.pas"
+             "Graph3D.pas",
+             "LightPT.pcu",
+             "LightPT.pas"
          })
 {
     var sourcePath = Path.Combine(pascalBin, "Lib", fileName);

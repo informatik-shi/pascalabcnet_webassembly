@@ -64,6 +64,15 @@ cp "$repo_root/tests/graphics/graph3d-basic.pas" "$graphics3d_bootstrap_dir/grap
 "$dotnet_cmd" "$upstream_root/bin-net10/pabcnetc.dll" "$graphics3d_bootstrap_dir/graph3d-basic.pas" /rebuild /noconsole
 test -f "$upstream_root/bin-net10/Lib/Graph3D.pcu"
 
+cp "$repo_root/browser-units/LightPT.pas" "$upstream_root/bin-net10/Lib/LightPT.pas"
+lightpt_bootstrap_dir="$repo_root/artifacts/lightpt"
+reset_generated_directory "$lightpt_bootstrap_dir"
+cp "$repo_root/tests/lightpt/Program.pas" "$lightpt_bootstrap_dir/Program.pas"
+cp "$repo_root/tests/lightpt/Tasks.pas" "$lightpt_bootstrap_dir/Tasks.pas"
+printf '%s\n' 'PascalABC.Web' > "$lightpt_bootstrap_dir/lightpt.dat"
+"$dotnet_cmd" "$upstream_root/bin-net10/pabcnetc.dll" "$lightpt_bootstrap_dir/Program.pas" /rebuild /noconsole
+test -f "$upstream_root/bin-net10/Lib/LightPT.pcu"
+
 asset_dir="$repo_root/src/PascalABC.Web.Runtime/wwwroot/pabc-assets"
 reset_generated_directory "$asset_dir"
 "$dotnet_cmd" run --project "$repo_root/tools/AssetStager/AssetStager.csproj" -c "$configuration" -- "$upstream_root/bin-net10" "$asset_dir"

@@ -1,7 +1,7 @@
 import { PascalABC } from "../dist/pascalabc-web.js";
 
 const elements = Object.fromEntries(
-  ["version", "code", "input", "run", "stop", "check", "status", "output", "diagnostics", "tests", "task", "mode-run", "mode-task", "load-graphics", "load-graphics3d", "graphics", "graphics-title", "graphics-renderer", "graphics-canvas"]
+  ["version", "code", "input", "run", "stop", "check", "status", "output", "diagnostics", "tests", "task", "mode-run", "mode-task", "load-graphics", "load-graphics3d", "load-lightpt", "graphics", "graphics-title", "graphics-renderer", "graphics-canvas"]
     .map(id => [id, document.getElementById(id)])
 );
 
@@ -33,6 +33,8 @@ begin
   Font.Color := Colors.Black;
   TextOut(440, 145, 'Canvas 2D', Alignment.Center);
 end.`;
+
+let lightPTAssignment = null;
 
 const graphics3DExample = `uses Graph3D;
 
@@ -87,13 +89,16 @@ async function run() {
   try {
     const result = await PascalABC.run(elements.code.value, {
       stdin: elements.input.value,
-      timeout: 3000
+      timeout: 3000,
+      lightPT: lightPTAssignment
     });
     elements.output.textContent = result.stdout || result.stderr;
     showDiagnostics(result.diagnostics);
     elements.status.textContent = result.timedOut
       ? "Остановлено по timeout"
-      : `${result.compileTime.toFixed(0)} мс compile · ${result.executionTime.toFixed(0)} мс run`;
+      : result.lightPT?.checked
+        ? result.lightPT.passed ? "LightPT: задание выполнено" : "LightPT: неверное решение"
+        : `${result.compileTime.toFixed(0)} мс compile · ${result.executionTime.toFixed(0)} мс run`;
   } catch (error) {
     elements.output.textContent = String(error);
     elements.status.textContent = "Ошибка runtime";
@@ -150,6 +155,7 @@ elements["mode-run"].addEventListener("click", () => selectMode(false));
 elements["mode-task"].addEventListener("click", () => selectMode(true));
 elements["load-graphics"].addEventListener("click", () => {
   selectMode(false);
+  lightPTAssignment = null;
   elements.code.value = graphicsExample;
   elements.input.value = "";
   elements.status.textContent = "Пример GraphWPF загружен — нажмите Run";
@@ -157,10 +163,31 @@ elements["load-graphics"].addEventListener("click", () => {
 });
 elements["load-graphics3d"].addEventListener("click", () => {
   selectMode(false);
+  lightPTAssignment = null;
   elements.code.value = graphics3DExample;
   elements.input.value = "";
   elements.status.textContent = "Пример Graph3D загружен — нажмите Run";
   elements.code.focus();
+});
+elements["load-lightpt"].addEventListener("click", async () => {
+  setBusy(true, "Загрузка программы и скрытого Tasks.pas…");
+  try {
+    const [program, tasks] = await Promise.all([
+      fetch("../examples/lightpt/Program.pas").then(response => response.text()),
+      fetch("../examples/lightpt/Tasks.pas").then(response => response.text())
+    ]);
+    selectMode(false);
+    elements.code.value = program;
+    elements.input.value = "";
+    lightPTAssignment = { tasks, taskName: "CountDivisibleByFour" };
+    elements.status.textContent = "Программа загружена; скрытый Tasks.pas подключится автоматически";
+    elements.code.focus();
+  } catch (error) {
+    elements.output.textContent = String(error);
+    elements.status.textContent = "Не удалось загрузить пример LightPT";
+  } finally {
+    setBusy(false, elements.status.textContent);
+  }
 });
 elements.code.addEventListener("keydown", event => {
   if (event.key === "Enter" && (event.ctrlKey || event.metaKey)) {

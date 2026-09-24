@@ -10,6 +10,19 @@ export interface PascalABCRunOptions {
   stdin?: string;
   timeout?: number;
   compileTimeout?: number;
+  lightPT?: PascalABCLightPTOptions;
+}
+
+export interface PascalABCLightPTOptions {
+  tasks: string;
+  taskName?: string;
+}
+
+export interface PascalABCLightPTResult {
+  checked: boolean;
+  taskName: string;
+  status: "NotUnderControl" | "Solved" | "IOError" | "BadSolution" | "PartialSolution" | "InitialTask" | "BadInitialTask" | "InitialTaskPT4" | "ErrFix" | "Demo";
+  passed: boolean;
 }
 
 export interface PascalABCTest {
@@ -33,6 +46,7 @@ export interface PascalABCResult {
   executionTime: number;
   diagnostics: PascalABCDiagnostic[];
   timedOut?: boolean;
+  lightPT?: PascalABCLightPTResult;
 }
 
 // The zero-dependency JavaScript build is the package entry point. These

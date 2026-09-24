@@ -15,6 +15,8 @@ $graphicsUnit = Join-Path $repositoryRoot 'browser-units\GraphWPF.pas'
 $graphicsTest = Join-Path $repositoryRoot 'tests\graphics\graphwpf-basic.pas'
 $graphics3DUnit = Join-Path $repositoryRoot 'browser-units\Graph3D.pas'
 $graphics3DTest = Join-Path $repositoryRoot 'tests\graphics\graph3d-basic.pas'
+$lightPTUnit = Join-Path $repositoryRoot 'browser-units\LightPT.pas'
+$lightPTTestDirectory = Join-Path $repositoryRoot 'tests\lightpt'
 $assetDestination = Join-Path $repositoryRoot 'src\PascalABC.Web.Runtime\wwwroot\pabc-assets'
 $publishDirectory = Join-Path $repositoryRoot "src\PascalABC.Web.Runtime\bin\$Configuration\net10.0\publish\wwwroot"
 $distributionDirectory = Join-Path $repositoryRoot 'dist'
@@ -113,6 +115,18 @@ try {
     Assert-LastExitCode 'Graph3D browser unit rebuild'
     if (-not (Test-Path -LiteralPath (Join-Path $pascalLib 'Graph3D.pcu'))) {
         throw 'Graph3D browser unit did not produce Graph3D.pcu.'
+    }
+    Copy-Item -LiteralPath $lightPTUnit -Destination (Join-Path $pascalLib 'LightPT.pas') -Force
+    $lightPTBootstrapDirectory = Join-Path $repositoryRoot 'artifacts\lightpt'
+    Reset-GeneratedDirectory $lightPTBootstrapDirectory
+    $lightPTBootstrapSource = Join-Path $lightPTBootstrapDirectory 'Program.pas'
+    Copy-Item -LiteralPath (Join-Path $lightPTTestDirectory 'Program.pas') -Destination $lightPTBootstrapSource
+    Copy-Item -LiteralPath (Join-Path $lightPTTestDirectory 'Tasks.pas') -Destination (Join-Path $lightPTBootstrapDirectory 'Tasks.pas')
+    Set-Content -LiteralPath (Join-Path $lightPTBootstrapDirectory 'lightpt.dat') -Value 'PascalABC.Web' -Encoding utf8
+    & $dotnet (Join-Path $pascalBin 'pabcnetc.dll') $lightPTBootstrapSource /rebuild /noconsole
+    Assert-LastExitCode 'LightPT browser unit rebuild'
+    if (-not (Test-Path -LiteralPath (Join-Path $pascalLib 'LightPT.pcu'))) {
+        throw 'LightPT browser unit did not produce LightPT.pcu.'
     }
 
     Reset-GeneratedDirectory $assetDestination

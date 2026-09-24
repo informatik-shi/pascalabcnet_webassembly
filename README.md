@@ -74,7 +74,8 @@ const result = await PascalABC.check(studentCode, [
 - `src/PascalABC.Web.Runtime` — .NET/WASM host и JS export;
 - `js/` — zero-dependency JS/TypeScript API и Worker;
 - `demo/` — учебное demo Run/Stop/Проверить;
-- `tests/programs` — 33 Pascal-программы;
+- `tests/programs` — 33 базовые Pascal-программы;
+- `tests/lightpt` — раздельные `Program.pas` и скрытый `Tasks.pas`;
 - `tests/browser` — public API, full suite и timeout tests;
 - `tools/AssetStager` — staging runtime metadata и PCU;
 - `docs/` — исследование архитектуры, стратегия, безопасность и совместимость.
@@ -85,7 +86,8 @@ const result = await PascalABC.check(studentCode, [
 
 - `/tests/browser/smoke.html` — `version`, `run`, `check`;
 - `/tests/browser/timeout.html` — неотзывчивый loop и heartbeat UI;
-- `/tests/browser/suite.html` — все 33 программы, включая error/timeout cases.
+- `/tests/browser/suite.html` — все 34 программы, включая LightPT и error/timeout cases;
+- `/tests/browser/lightpt.html` — LightPT и восстановление стандартного вывода после его завершения.
 
 Зафиксированный прогон и измерения: [docs/TEST_RESULTS.md](docs/TEST_RESULTS.md).
 
@@ -93,7 +95,7 @@ const result = await PascalABC.check(studentCode, [
 
 ## Ограничения MVP
 
-Поддерживаются учебные console programs и первый browser subset `GraphWPF` на Canvas 2D. В demo нажмите «Пример GraphWPF», затем Run. `Graph3D` спроектирован для WebGL, но пока не заявлен как реализованный. GraphABC, FormsABC, desktop debugger/IDE plugins и доступ к пользовательской файловой системе не поддерживаются. Worker — важная граница отзывчивости, но не OS sandbox; для недоверенного кода используйте отдельный origin. См. [docs/GRAPHICS.md](docs/GRAPHICS.md), [docs/SECURITY.md](docs/SECURITY.md) и [docs/COMPATIBILITY.md](docs/COMPATIBILITY.md).
+Поддерживаются учебные console programs, browser subsets `GraphWPF` на Canvas 2D, `Graph3D` на WebGL 2 и локальная проверка решений через `LightPT`. В demo доступны отдельные примеры всех трёх модулей. GraphABC, FormsABC, desktop debugger/IDE plugins и доступ к пользовательской файловой системе не поддерживаются. Worker — важная граница отзывчивости, но не OS sandbox; для недоверенного кода используйте отдельный origin. См. [docs/GRAPHICS.md](docs/GRAPHICS.md), [docs/LIGHTPT.md](docs/LIGHTPT.md), [docs/SECURITY.md](docs/SECURITY.md) и [docs/COMPATIBILITY.md](docs/COMPATIBILITY.md).
 
 ## Лицензии
 

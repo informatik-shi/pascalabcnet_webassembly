@@ -13,15 +13,24 @@ try {
   for (const [index, test] of cases.entries()) {
     progressElement.textContent = `${index + 1}/${cases.length}: ${test.file}`;
     const code = await fetch(`../programs/${test.file}`).then(response => response.text());
+    const tasks = test.tasks
+      ? await fetch(`../programs/${test.tasks}`).then(response => response.text())
+      : null;
     const timeout = test.expect === "timeout" ? 750 : 30000;
-    const result = await PascalABC.run(code, { stdin: test.stdin ?? "", timeout });
+    const result = await PascalABC.run(code, {
+      stdin: test.stdin ?? "",
+      timeout,
+      lightPT: tasks ? { tasks, taskName: test.taskName } : undefined
+    });
     const passed = test.expect === "compile-error"
       ? !result.success && result.diagnostics?.some(item => item.severity === "error")
       : test.expect === "runtime-error"
         ? !result.success && result.exitCode !== 0 && Boolean(result.stderr)
         : test.expect === "timeout"
           ? result.timedOut === true && result.exitCode === 124
-          : result.success && normalize(result.stdout) === test.stdout;
+          : result.success
+            && normalize(result.stdout) === test.stdout
+            && (!tasks || result.lightPT?.passed === true);
     results.push({
       file: test.file,
       passed,

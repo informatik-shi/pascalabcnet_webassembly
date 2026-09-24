@@ -54,7 +54,7 @@ class PascalABCClient {
   async compile(code, options = {}) {
     await this.init();
     return this.#withTimeoutResult(
-      () => this.#request({ operation: "compile", code }, options.timeout ?? DEFAULT_COMPILE_TIMEOUT),
+      () => this.#request({ operation: "compile", code, lightPT: options.lightPT }, options.timeout ?? DEFAULT_COMPILE_TIMEOUT),
       options.timeout ?? DEFAULT_COMPILE_TIMEOUT
     );
   }
@@ -63,7 +63,7 @@ class PascalABCClient {
     await this.init();
     const compileTimeout = options.compileTimeout ?? DEFAULT_COMPILE_TIMEOUT;
     const compilation = await this.#withTimeoutResult(
-      () => this.#request({ operation: "compile", code }, compileTimeout),
+      () => this.#request({ operation: "compile", code, lightPT: options.lightPT }, compileTimeout),
       compileTimeout
     );
     if (!compilation.success) return compilation;

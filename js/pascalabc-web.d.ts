@@ -17,6 +17,27 @@ export interface PascalABCRunOptions {
   /** Maximum program execution time; compilation is governed separately. */
   timeout?: number;
   compileTimeout?: number;
+  /** Hidden LightPT checker compiled from a separate Tasks.pas source. */
+  lightPT?: PascalABCLightPTOptions;
+}
+
+export interface PascalABCCompileOptions {
+  timeout?: number;
+  lightPT?: PascalABCLightPTOptions;
+}
+
+export interface PascalABCLightPTOptions {
+  /** Full source of the hidden Tasks.pas unit. */
+  tasks: string;
+  /** Logical task name passed to CheckTask. */
+  taskName?: string;
+}
+
+export interface PascalABCLightPTResult {
+  checked: boolean;
+  taskName: string;
+  status: "NotUnderControl" | "Solved" | "IOError" | "BadSolution" | "PartialSolution" | "InitialTask" | "BadInitialTask" | "InitialTaskPT4" | "ErrFix" | "Demo";
+  passed: boolean;
 }
 
 export interface PascalABCCanvasOptions {
@@ -72,6 +93,7 @@ export interface PascalABCResult {
   timedOut?: boolean;
   artifactId?: string;
   assemblyBytes?: number;
+  lightPT?: PascalABCLightPTResult;
 }
 
 export interface PascalABCTestResult extends PascalABCTest {
@@ -98,7 +120,7 @@ export class PascalABCTimeoutError extends Error {
 export class PascalABCClient {
   version: string | null;
   init(options?: PascalABCInitOptions): Promise<this>;
-  compile(code: string, options?: { timeout?: number }): Promise<PascalABCResult>;
+  compile(code: string, options?: PascalABCCompileOptions): Promise<PascalABCResult>;
   run(code: string, options?: PascalABCRunOptions): Promise<PascalABCResult>;
   check(code: string, tests: PascalABCTest[], options?: PascalABCCheckOptions): Promise<PascalABCCheckResult>;
   attachCanvas(canvas: HTMLCanvasElement, options?: PascalABCCanvasOptions): BrowserGraphicsRenderer;

@@ -19,6 +19,8 @@ public static partial class BrowserCompilerHost
     private const string WorkDirectory = Root + "/work";
     private const string StdinKey = "PascalABC.Web.stdin";
     private const string StdoutKey = "PascalABC.Web.stdout";
+    private const string LightPTTaskNameKey = "PascalABC.Web.lightpt.taskName";
+    private const string LightPTResultKey = "PascalABC.Web.lightpt.result";
 
     private static readonly SemaphoreSlim OperationGate = new(1, 1);
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web)
@@ -56,8 +58,8 @@ public static partial class BrowserCompilerHost
                     version = Compiler.Version,
                     runtime = Environment.Version.ToString()
                 },
-                "compile" => CompileForApi(request.Code ?? string.Empty),
-                "run" => RunForApi(request.Code ?? string.Empty, request.Stdin ?? string.Empty),
+                "compile" => CompileForApi(request.Code ?? string.Empty, request.LightPT),
+                "run" => RunForApi(request.Code ?? string.Empty, request.Stdin ?? string.Empty, request.LightPT),
                 "execute" => ExecuteForApi(request.ArtifactId, request.Stdin ?? string.Empty),
                 "check" => CheckForApi(request),
                 _ => throw new ArgumentException($"Unknown operation '{request.Operation}'.")
@@ -117,9 +119,9 @@ public static partial class BrowserCompilerHost
         initialized = true;
     }
 
-    private static object CompileForApi(string code)
+    private static object CompileForApi(string code, LightPTConfiguration? lightPT)
     {
-        var compilation = Compile(code);
+        var compilation = Compile(code, lightPT);
         if (!compilation.Success)
             return CompilationResponse(compilation);
 
@@ -131,13 +133,13 @@ public static partial class BrowserCompilerHost
         return CompilationResponse(compilation);
     }
 
-    private static object RunForApi(string code, string stdin)
+    private static object RunForApi(string code, string stdin, LightPTConfiguration? lightPT)
     {
-        var compilation = Compile(code);
+        var compilation = Compile(code, lightPT);
         if (!compilation.Success)
             return CompilationResponse(compilation);
 
-        var execution = Execute(compilation.AssemblyBytes!, stdin);
+        var execution = Execute(compilation, stdin);
         return new
         {
             success = execution.ExitCode == 0,
@@ -148,7 +150,8 @@ public static partial class BrowserCompilerHost
             execution.ExecutionTime,
             compilation.Diagnostics,
             compilation.ArtifactId,
-            assemblyBytes = compilation.AssemblyBytes!.Length
+            assemblyBytes = compilation.AssemblyBytes!.Length,
+            execution.LightPT
         };
     }
 
@@ -157,7 +160,7 @@ public static partial class BrowserCompilerHost
         if (string.IsNullOrWhiteSpace(artifactId) || !Artifacts.TryGetValue(artifactId, out var compilation))
             throw new ArgumentException($"Unknown or expired artifact '{artifactId}'.");
 
-        var execution = Execute(compilation.AssemblyBytes!, stdin);
+        var execution = Execute(compilation, stdin);
         return new
         {
             success = execution.ExitCode == 0,
@@ -168,13 +171,14 @@ public static partial class BrowserCompilerHost
             execution.ExecutionTime,
             compilation.Diagnostics,
             compilation.ArtifactId,
-            assemblyBytes = compilation.AssemblyBytes!.Length
+            assemblyBytes = compilation.AssemblyBytes!.Length,
+            execution.LightPT
         };
     }
 
     private static object CheckForApi(RuntimeRequest request)
     {
-        var compilation = Compile(request.Code ?? string.Empty);
+        var compilation = Compile(request.Code ?? string.Empty, null);
         if (!compilation.Success)
             return new
             {
@@ -191,7 +195,7 @@ public static partial class BrowserCompilerHost
         var passed = 0;
         foreach (var test in request.Tests ?? new List<TestCase>())
         {
-            var execution = Execute(compilation.AssemblyBytes!, test.Input ?? string.Empty);
+            var execution = Execute(compilation, test.Input ?? string.Empty);
             var expected = test.Expected ?? string.Empty;
             var testPassed = execution.ExitCode == 0
                 && string.Equals(Normalize(execution.Stdout, comparison), Normalize(expected, comparison), StringComparison.Ordinal);
@@ -219,51 +223,74 @@ public static partial class BrowserCompilerHost
         };
     }
 
-    private static CompiledProgram Compile(string code)
+    private static CompiledProgram Compile(string code, LightPTConfiguration? lightPT)
     {
+        if (lightPT is not null && string.IsNullOrWhiteSpace(lightPT.Tasks))
+            throw new ArgumentException("lightPT.tasks must contain the hidden Tasks.pas source.");
+
         var id = Interlocked.Increment(ref nextProgramId);
-        var sourcePath = Path.Combine(WorkDirectory, $"program_{id:D6}.pas");
-        File.WriteAllText(sourcePath, code);
-
-        var compiler = new Compiler();
-        var options = new CompilerOptions(sourcePath, CompilerOptions.OutputType.ConsoleApplicaton)
+        var compilationDirectory = Path.Combine(WorkDirectory, $"program_{id:D6}");
+        Directory.CreateDirectory(compilationDirectory);
+        var sourcePath = Path.Combine(compilationDirectory, $"program_{id:D6}.pas");
+        string? outputPath = null;
+        try
         {
-            Debug = false,
-            Rebuild = false,
-            SavePCU = false,
-            SaveDocumentation = false,
-            OutputDirectory = WorkDirectory,
-            SystemDirectory = Root,
-            SearchDirectories = new List<string>(),
-            StandardDirectories = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+            File.WriteAllText(sourcePath, code);
+            if (lightPT is not null)
             {
-                ["%PABCSYSTEM%"] = Root
+                // This mirrors desktop PascalABC.NET: the syntax converter sees
+                // lightpt.dat and injects `uses LightPT, Tasks` into the program.
+                // The student's source stays untouched and never names either unit.
+                File.WriteAllText(Path.Combine(compilationDirectory, "Tasks.pas"), lightPT.Tasks!);
+                File.WriteAllText(Path.Combine(compilationDirectory, "lightpt.dat"), "PascalABC.Web");
             }
-        };
 
-        var timer = Stopwatch.StartNew();
-        var outputPath = compiler.Compile(options);
-        timer.Stop();
-        var diagnostics = compiler.ErrorsList.Select(error => ToDiagnostic(error))
-            .Concat(compiler.Warnings.Select(error => ToDiagnostic(error, "warning")))
-            .ToArray();
-        var bytes = outputPath is not null && compiler.ErrorsList.Count == 0
-            ? File.ReadAllBytes(outputPath)
-            : null;
+            var compiler = new Compiler();
+            var options = new CompilerOptions(sourcePath, CompilerOptions.OutputType.ConsoleApplicaton)
+            {
+                Debug = false,
+                Rebuild = false,
+                SavePCU = false,
+                SaveDocumentation = false,
+                OutputDirectory = WorkDirectory,
+                SystemDirectory = Root,
+                SearchDirectories = new List<string>(),
+                StandardDirectories = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+                {
+                    ["%PABCSYSTEM%"] = Root
+                }
+            };
 
-        TryDelete(sourcePath);
-        if (outputPath is not null)
-        {
-            TryDelete(outputPath);
-            TryDelete(Path.ChangeExtension(outputPath, ".pdb"));
-            TryDelete(Path.ChangeExtension(outputPath, ".runtimeconfig.json"));
+            var timer = Stopwatch.StartNew();
+            outputPath = compiler.Compile(options);
+            timer.Stop();
+            var diagnostics = compiler.ErrorsList.Select(error => ToDiagnostic(error))
+                .Concat(compiler.Warnings.Select(error => ToDiagnostic(error, "warning")))
+                .ToArray();
+            var bytes = outputPath is not null && compiler.ErrorsList.Count == 0
+                ? File.ReadAllBytes(outputPath)
+                : null;
+
+            return new CompiledProgram(
+                $"pabc-{id:D6}",
+                bytes,
+                timer.Elapsed.TotalMilliseconds,
+                diagnostics,
+                lightPT is not null,
+                string.IsNullOrWhiteSpace(lightPT?.TaskName) ? $"program_{id:D6}" : lightPT.TaskName!);
         }
-
-        return new CompiledProgram(
-            $"pabc-{id:D6}",
-            bytes,
-            timer.Elapsed.TotalMilliseconds,
-            diagnostics);
+        finally
+        {
+            if (outputPath is not null)
+            {
+                TryDelete(outputPath);
+                TryDelete(Path.ChangeExtension(outputPath, ".pdb"));
+                TryDelete(Path.ChangeExtension(outputPath, ".runtimeconfig.json"));
+            }
+            // Hidden Tasks.pas must never remain readable by a later program,
+            // including when compilation throws before diagnostics are returned.
+            TryDeleteDirectory(compilationDirectory);
+        }
     }
 
     private static void TryDelete(string path)
@@ -280,7 +307,20 @@ public static partial class BrowserCompilerHost
         }
     }
 
-    private static ExecutionResult Execute(byte[] assemblyBytes, string stdin)
+    private static void TryDeleteDirectory(string path)
+    {
+        try
+        {
+            if (Directory.Exists(path))
+                Directory.Delete(path, true);
+        }
+        catch
+        {
+            // The browser VFS is ephemeral; failed cleanup must not hide a result.
+        }
+    }
+
+    private static ExecutionResult Execute(CompiledProgram compilation, string stdin)
     {
         using var input = new StringReader(stdin);
         using var output = new StringWriter();
@@ -292,7 +332,9 @@ public static partial class BrowserCompilerHost
             BrowserGraphicsBridge.BeginExecution();
             AppDomain.CurrentDomain.SetData(StdinKey, input);
             AppDomain.CurrentDomain.SetData(StdoutKey, output);
-            var assembly = Assembly.Load(assemblyBytes);
+            AppDomain.CurrentDomain.SetData(LightPTTaskNameKey, compilation.LightPTEnabled ? compilation.TaskName : null);
+            AppDomain.CurrentDomain.SetData(LightPTResultKey, null);
+            var assembly = Assembly.Load(compilation.AssemblyBytes!);
             var entryPoint = assembly.EntryPoint
                 ?? throw new InvalidOperationException("Generated assembly has no entry point.");
             if (entryPoint.GetParameters().Length == 0 && entryPoint.ReturnType == typeof(void))
@@ -317,11 +359,23 @@ public static partial class BrowserCompilerHost
             AppDomain.CurrentDomain.SetData(StdoutKey, null);
         }
 
+        var lightPTStatus = AppDomain.CurrentDomain.GetData(LightPTResultKey) as string;
+        var lightPT = compilation.LightPTEnabled
+            ? new LightPTExecutionResult(
+                lightPTStatus is not null && !string.Equals(lightPTStatus, "NotUnderControl", StringComparison.Ordinal),
+                compilation.TaskName,
+                lightPTStatus ?? "NotUnderControl",
+                string.Equals(lightPTStatus, "Solved", StringComparison.Ordinal))
+            : null;
+        AppDomain.CurrentDomain.SetData(LightPTTaskNameKey, null);
+        AppDomain.CurrentDomain.SetData(LightPTResultKey, null);
+
         return new ExecutionResult(
             output.ToString(),
             error.ToString(),
             exitCode,
-            timer.Elapsed.TotalMilliseconds);
+            timer.Elapsed.TotalMilliseconds,
+            lightPT);
     }
 
     private static object CompilationResponse(CompiledProgram compilation) => new
@@ -363,12 +417,20 @@ public static partial class BrowserCompilerHost
         string ArtifactId,
         byte[]? AssemblyBytes,
         double CompileTime,
-        Diagnostic[] Diagnostics)
+        Diagnostic[] Diagnostics,
+        bool LightPTEnabled,
+        string TaskName)
     {
         public bool Success => AssemblyBytes is not null && Diagnostics.All(item => item.Severity != "error");
     }
 
-    private sealed record ExecutionResult(string Stdout, string Stderr, int ExitCode, double ExecutionTime);
+    private sealed record ExecutionResult(
+        string Stdout,
+        string Stderr,
+        int ExitCode,
+        double ExecutionTime,
+        LightPTExecutionResult? LightPT);
+    private sealed record LightPTExecutionResult(bool Checked, string TaskName, string Status, bool Passed);
     private sealed record Diagnostic(int Line, int Column, string Severity, string Code, string Message);
 
     private sealed class RuntimeRequest
@@ -378,8 +440,15 @@ public static partial class BrowserCompilerHost
         public string? Code { get; set; }
         public string? Stdin { get; set; }
         public string? ArtifactId { get; set; }
+        public LightPTConfiguration? LightPT { get; set; }
         public List<TestCase>? Tests { get; set; }
         public ComparisonOptions? Comparison { get; set; }
+    }
+
+    private sealed class LightPTConfiguration
+    {
+        public string? Tasks { get; set; }
+        public string? TaskName { get; set; }
     }
 
     private sealed class TestCase

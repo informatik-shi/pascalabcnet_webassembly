@@ -115,6 +115,26 @@ const result = await PascalABC.check(code, [
 
 `trimTrailingWhitespace` удаляет пробелы справа на каждой строке; `normalizeNewlines` приводит CRLF/CR к LF; `ignoreTrailingNewline` игнорирует конечные переводы строк. Default: `true`, `true`, `false`.
 
+## Скрытая проверка LightPT
+
+Программа ученика и `Tasks.pas` передаются раздельно. В программе ученика не должно быть `uses LightPT`, `uses Tasks` или вызовов `CheckOutput`:
+
+```js
+const program = await fetch("./Program.pas").then(response => response.text());
+const tasks = await fetch("./Tasks.pas").then(response => response.text());
+
+const result = await PascalABC.run(program, {
+  lightPT: { tasks, taskName: "CountDivisibleByFour" },
+  timeout: 3000
+});
+
+if (result.lightPT?.passed) {
+  console.log("Задание выполнено");
+}
+```
+
+Compiler host автоматически подключает `LightPT` и скрытый модуль `Tasks`. `result.lightPT` содержит только `checked`, `taskName`, `status` и `passed`; эталонные значения не раскрываются. Полный пример: [`examples/lightpt`](../examples/lightpt).
+
 Полные TypeScript declarations находятся в `js/pascalabc-web.d.ts`.
 
 ## Canvas и GraphWPF
