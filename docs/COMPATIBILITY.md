@@ -35,10 +35,11 @@
 | Reflection | ✓ | ограниченно | Только загруженные managed assemblies Worker |
 | GraphWPF: базовые примитивы и текст | ✓ | ограниченно | Canvas 2D; `tests/graphics/graphwpf-basic.pas` |
 | GraphWPF: animation/input/images | ✓ | ✗ | Следующий этап graphics transport |
+| PlotWPF: линии, маркеры, сетка и `ChangeData` | ✓ | ограниченно | Canvas 2D; `tests/graphics/plotwpf-basic.pas` |
 | Graph3D: базовые тела, камера и свет | ✓ | ограниченно | WebGL 2; `tests/graphics/graph3d-basic.pas` |
 | LightPT: скрытый `Tasks.pas` отдельно от программы | ✓ | ограниченно | Автоподключение; без авторизации и удалённой БД; `tests/lightpt` |
 | GraphABC | ✓ | ✗ | Windows/UI dependency |
 | FormsABC/WinForms/WPF | ✓ | ✗ | Windows/UI dependency |
 | Debugger и IDE plugins | ✓ | ✗ | Не входят в compiler host |
 
-Browser suite: `tests/browser/suite.html`. Smoke API: `tests/browser/smoke.html`. LightPT: `tests/browser/lightpt.html`. Изоляция/timeout: `tests/browser/timeout.html`.
+Browser suite: `tests/browser/suite.html`. Smoke API: `tests/browser/smoke.html`. Графика: `tests/browser/graphics.html`, `plotwpf.html`, `graphics3d.html`. LightPT: `tests/browser/lightpt.html`. Изоляция/timeout: `tests/browser/timeout.html`.

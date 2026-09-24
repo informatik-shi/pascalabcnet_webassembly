@@ -137,7 +137,7 @@ Compiler host автоматически подключает `LightPT` и ск�
 
 Полные TypeScript declarations находятся в `js/pascalabc-web.d.ts`.
 
-## Canvas и GraphWPF
+## Canvas, GraphWPF и PlotWPF
 
 Перед выполнением программы с `uses GraphWPF` подключите Canvas к клиенту:
 
@@ -157,4 +157,6 @@ end.
 `);
 ```
 
-`attachCanvas()` возвращает `BrowserGraphicsRenderer`, который автоматически выбирает Canvas 2D для `GraphWPF` или WebGL 2 для `Graph3D`. `detachCanvas()` отключает текущий renderer. Graphics bridge остаётся внутри Worker и не даёт student assembly прямого доступа к DOM. Реализованный subset описан в [GRAPHICS.md](GRAPHICS.md).
+Тот же Canvas подходит для `uses PlotWPF`: модуль строит оси, сетку, линии и маркеры через browser-версию `GraphWPF`. Пошаговые примеры собраны в [тьюториале PlotWPF](PLOTWPF_TUTORIAL.md).
+
+`attachCanvas()` возвращает `BrowserGraphicsRenderer`, который автоматически выбирает Canvas 2D для `GraphWPF`/`PlotWPF` или WebGL 2 для `Graph3D`. `detachCanvas()` отключает текущий renderer. Graphics bridge остаётся внутри Worker и не даёт student assembly прямого доступа к DOM. Реализованный subset описан в [GRAPHICS.md](GRAPHICS.md).

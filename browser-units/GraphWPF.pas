@@ -80,6 +80,7 @@ type
     static Pink: Color := integer($FFFFC0CB);
     static Brown: Color := integer($FFA52A2A);
     static Beige: Color := integer($FFF5F5DC);
+    static Bisque: Color := integer($FFFFE4C4);
     static Coral: Color := integer($FFFF7F50);
     static Cyan: Color := integer($FF00FFFF);
   end;

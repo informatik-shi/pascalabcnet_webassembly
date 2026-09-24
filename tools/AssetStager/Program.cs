@@ -44,6 +44,8 @@ foreach (var fileName in new[]
              "PABCExtensions.pas",
              "GraphWPF.pcu",
              "GraphWPF.pas",
+             "PlotWPF.pcu",
+             "PlotWPF.pas",
              "Graph3D.pcu",
              "Graph3D.pas",
              "LightPT.pcu",

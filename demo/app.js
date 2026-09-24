@@ -1,7 +1,7 @@
 import { PascalABC } from "../dist/pascalabc-web.js";
 
 const elements = Object.fromEntries(
-  ["version", "code", "input", "run", "stop", "check", "status", "output", "diagnostics", "tests", "task", "mode-run", "mode-task", "load-graphics", "load-graphics3d", "load-lightpt", "graphics", "graphics-title", "graphics-renderer", "graphics-canvas"]
+  ["version", "code", "input", "run", "stop", "check", "status", "output", "diagnostics", "tests", "task", "mode-run", "mode-task", "load-graphics", "load-plotwpf", "load-graphics3d", "load-lightpt", "graphics", "graphics-title", "graphics-renderer", "graphics-canvas"]
     .map(id => [id, document.getElementById(id)])
 );
 
@@ -32,6 +32,26 @@ begin
   Font.Size := 18;
   Font.Color := Colors.Black;
   TextOut(440, 145, 'Canvas 2D', Alignment.Center);
+end.`;
+
+const plotWPFExample = `uses PlotWPF;
+
+begin
+  var grid := new GridWPF(1, 2, 10);
+
+  var waves := new LineGraphWPF(-Pi, Pi, x -> Sin(x), Colors.RoyalBlue);
+  waves.Title := 'Синус и косинус';
+  waves.Graph[0].Thickness := 3;
+  waves.AddLineGraph(-Pi, Pi, x -> Cos(x), Colors.Coral);
+
+  var points := new MarkerGraphWPF(
+    Arr(1.0, 2.0, 3.0, 4.0, 5.0),
+    Arr(2.0, 5.0, 3.0, 7.0, 4.0),
+    Colors.Green, MarkerType.Diamond, 10);
+  points.Title := 'Наблюдения';
+  points.AddLineGraph(
+    Arr(1.0, 2.0, 3.0, 4.0, 5.0),
+    Arr(2.0, 5.0, 3.0, 7.0, 4.0), Colors.LightGreen);
 end.`;
 
 let lightPTAssignment = null;
@@ -159,6 +179,14 @@ elements["load-graphics"].addEventListener("click", () => {
   elements.code.value = graphicsExample;
   elements.input.value = "";
   elements.status.textContent = "Пример GraphWPF загружен — нажмите Run";
+  elements.code.focus();
+});
+elements["load-plotwpf"].addEventListener("click", () => {
+  selectMode(false);
+  lightPTAssignment = null;
+  elements.code.value = plotWPFExample;
+  elements.input.value = "";
+  elements.status.textContent = "Пример PlotWPF загружен — нажмите Run";
   elements.code.focus();
 });
 elements["load-graphics3d"].addEventListener("click", () => {

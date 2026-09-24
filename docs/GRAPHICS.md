@@ -6,10 +6,10 @@
 
 PascalABC.Web поэтому предоставляет browser compatibility units с теми же именами. Это не подмена компилятора: исходный код ученика по-прежнему проходит оригинальные parser, semantic analyzer и IL generator PascalABC.NET. Заменяется только платформенный graphics backend.
 
-## Реализованный путь GraphWPF и Graph3D
+## Реализованный путь GraphWPF, PlotWPF и Graph3D
 
 ```text
-program.pas (`uses GraphWPF`)
+program.pas (`uses GraphWPF` или `uses PlotWPF`)
   → официальный PascalABC.NET compiler
   → browser GraphWPF.pcu
   → PascalABC.Web.Graphics managed bridge
@@ -35,6 +35,16 @@ GraphWPF поддерживает:
 - HiDPI Canvas с адаптивным отображением в demo.
 
 Пока не поддержаны pixel batches/images/video, сохранение файлов/clipboard, frame-based animation, мышь/клавиатура и WPF-specific drawing objects. `TextSize` сейчас использует предсказуемую метрическую оценку, потому что синхронный DOM measurement из Worker нарушил бы sandbox и модель выполнения.
+
+PlotWPF построен поверх того же Canvas 2D backend и поддерживает:
+
+- `GridWPF`, `LineGraphWPF` и `MarkerGraphWPF`;
+- графики функций и готовых последовательностей `x/y`;
+- несколько линий и наборов маркеров в одной области;
+- заголовок, автоматический диапазон и явный `PlotRect`;
+- цвет, толщину линии, пять типов маркеров и `ChangeData` с перерисовкой.
+
+Практические примеры и описание API приведены в [тьюториале PlotWPF](PLOTWPF_TUTORIAL.md). Интерактивные WPF-контролы, legend, zoom/pan и animation пока не входят в browser subset.
 
 Graph3D MVP поддерживает:
 

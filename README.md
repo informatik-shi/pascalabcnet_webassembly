@@ -87,6 +87,9 @@ const result = await PascalABC.check(studentCode, [
 - `/tests/browser/smoke.html` — `version`, `run`, `check`;
 - `/tests/browser/timeout.html` — неотзывчивый loop и heartbeat UI;
 - `/tests/browser/suite.html` — все 34 программы, включая LightPT и error/timeout cases;
+- `/tests/browser/graphics.html` — базовый Canvas 2D renderer GraphWPF;
+- `/tests/browser/plotwpf.html` — линии и маркеры PlotWPF на Canvas 2D;
+- `/tests/browser/graphics3d.html` — базовая WebGL 2 сцена Graph3D;
 - `/tests/browser/lightpt.html` — LightPT и восстановление стандартного вывода после его завершения.
 
 Зафиксированный прогон и измерения: [docs/TEST_RESULTS.md](docs/TEST_RESULTS.md).
@@ -95,7 +98,7 @@ const result = await PascalABC.check(studentCode, [
 
 ## Ограничения MVP
 
-Поддерживаются учебные console programs, browser subsets `GraphWPF` на Canvas 2D, `Graph3D` на WebGL 2 и локальная проверка решений через `LightPT`. В demo доступны отдельные примеры всех трёх модулей. GraphABC, FormsABC, desktop debugger/IDE plugins и доступ к пользовательской файловой системе не поддерживаются. Worker — важная граница отзывчивости, но не OS sandbox; для недоверенного кода используйте отдельный origin. См. [docs/GRAPHICS.md](docs/GRAPHICS.md), [docs/LIGHTPT.md](docs/LIGHTPT.md), [docs/SECURITY.md](docs/SECURITY.md) и [docs/COMPATIBILITY.md](docs/COMPATIBILITY.md).
+Поддерживаются учебные console programs, browser subsets `GraphWPF` и `PlotWPF` на Canvas 2D, `Graph3D` на WebGL 2 и локальная проверка решений через `LightPT`. В demo доступны отдельные примеры всех четырёх модулей. Для PlotWPF есть [пошаговый тьюториал](docs/PLOTWPF_TUTORIAL.md). GraphABC, FormsABC, desktop debugger/IDE plugins и доступ к пользовательской файловой системе не поддерживаются. Worker — важная граница отзывчивости, но не OS sandbox; для недоверенного кода используйте отдельный origin. См. [docs/GRAPHICS.md](docs/GRAPHICS.md), [docs/LIGHTPT.md](docs/LIGHTPT.md), [docs/SECURITY.md](docs/SECURITY.md) и [docs/COMPATIBILITY.md](docs/COMPATIBILITY.md).
 
 ## Лицензии
 

@@ -28,6 +28,10 @@
 
 Длинный suite также выявил и позволил исправить eviction bug после 16 artifacts; финальный результат получен после исправления FIFO.
 
+## PlotWPF в браузере
+
+`tests/browser/plotwpf.html`: **PASS**. Программа с двумя областями графика успешно скомпилирована и выполнена без diagnostics; Canvas 2D получил размер 760×420 и 3 604 цветных пикселя. Проверены две линии, маркеры `Diamond`, `Thickness`, `ChangeData` и фиксированный `PlotRect`.
+
 ## Timeout и UI
 
 Для `while true` при `timeout: 500`:
@@ -48,7 +52,7 @@ Compilation и execution имеют отдельные лимиты; Worker ун
 
 - `scripts/build.ps1 -SkipUpstreamBuild`: success;
 - official standard library: 18 757 строк пересобраны;
-- asset staging: 75 raw files, 47 479 639 bytes до publish compression;
+- asset staging: 84 raw files, 47 812 194 bytes до publish compression;
 - `npm pack --dry-run`: success;
 - JS syntax checks: success;
 - browser patch reverse-check и `git diff --check`: success;
