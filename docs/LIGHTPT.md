@@ -8,7 +8,8 @@
 
 ```pascal
 begin
-  var values := Arr(3, 8, 12, 5, 16);
+  var count := ReadInteger;
+  var values := ArrGen(count, i -> ReadInteger);
   var divisibleByFour := values.Count(value -> value mod 4 = 0);
   Println(divisibleByFour);
 end.
@@ -25,10 +26,30 @@ unit Tasks;
 
 uses LightPT;
 
+function ReferenceSolve(values: sequence of integer): integer :=
+  values.Count(value -> value mod 4 = 0);
+
+procedure CheckCountDivisibleByFour;
+begin
+  if InputList.Count = 0 then
+  begin
+    TaskResult := BadSolution;
+    ColoredMessage('✗ LightPT: программа не прочитала входные данные');
+    exit;
+  end;
+
+  var count := Int(0);
+  CheckInputCount(count + 1);
+  if TaskResult = BadSolution then exit;
+
+  var values := ArrGen(count, i -> Int(i + 1));
+  CheckOutput(ReferenceSolve(values));
+end;
+
 procedure CheckTaskT(name: string);
 begin
   case name of
-    'CountDivisibleByFour': CheckOutput(3);
+    'CountDivisibleByFour': CheckCountDivisibleByFour;
   end;
 end;
 
@@ -46,6 +67,7 @@ const [program, tasks] = await Promise.all([
 ]);
 
 const result = await PascalABC.run(program, {
+  stdin: "5\n3 8 12 5 16\n",
   lightPT: {
     tasks,
     taskName: "CountDivisibleByFour"
@@ -59,6 +81,8 @@ console.log(result.lightPT);
 Во время компиляции Web host создаёт изолированный каталог с `Program.pas`, скрытым `Tasks.pas` и служебным `lightpt.dat`. Штатный `TeacherControlConverter` PascalABC.NET автоматически добавляет `LightPT` и `Tasks` в синтаксическое дерево. Исходный текст программы ученика при этом не изменяется.
 
 Проверка выполняется в финализации `LightPT`, после завершения основной программы. Ожидаемые значения не включаются в stdout и не возвращаются в результате API. Возвращается только итоговый статус.
+
+В demo кнопка **Пример LightPT** загружает в редактор только `Program.pas`. Кнопка **Код решения и проверки** отдельно открывает учебное представление обоих файлов для преподавателя; на выполнение это не влияет, и ученический исходник по-прежнему не содержит `uses LightPT` или `uses Tasks`.
 
 ## Поддерживаемый subset
 

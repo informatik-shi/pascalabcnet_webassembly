@@ -29,7 +29,7 @@
   { "file": "28_break_continue.pas", "stdout": "12\n" },
   { "file": "29_string_length.pas", "stdout": "6\n" },
   { "file": "30_recursive_function.pas", "stdout": "720\n" },
-  { "file": "../lightpt/Program.pas", "tasks": "../lightpt/Tasks.pas", "taskName": "CountDivisibleByFour", "stdout": "3\n✓ LightPT: задание выполнено\n" },
+  { "file": "../lightpt/Program.pas", "tasks": "../lightpt/Tasks.pas", "taskName": "CountDivisibleByFour", "stdin": "5\n3 8 12 5 16\n", "stdout": "3\n✓ LightPT: задание выполнено\n" },
   { "file": "31_compile_error.pas", "expect": "compile-error" },
   { "file": "32_runtime_error.pas", "expect": "runtime-error" },
   { "file": "33_infinite_loop.pas", "expect": "timeout" }

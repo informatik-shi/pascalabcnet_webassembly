@@ -10,13 +10,25 @@ try {
     fetch("../lightpt/Tasks.pas").then(response => response.text())
   ]);
   const lightPT = { tasks, taskName: "CountDivisibleByFour" };
-  const run = await PascalABC.run(program, { timeout: 30000, lightPT });
+  const run = await PascalABC.run(program, {
+    stdin: "5\n3 8 12 5 16\n",
+    timeout: 30000,
+    lightPT
+  });
+
+  const secondRun = await PascalABC.run(program, {
+    stdin: "6\n-8 -3 0 7 12 15\n",
+    timeout: 30000,
+    lightPT
+  });
 
   const wrong = await PascalABC.run(`
 begin
-  Println(2);
+  var count := ReadInteger;
+  loop count do ReadInteger;
+  Println(0);
 end.
-`, { timeout: 30000, lightPT });
+`, { stdin: "5\n3 8 12 5 16\n", timeout: 30000, lightPT });
 
   const afterLightPT = await PascalABC.run(`
 begin
@@ -30,6 +42,9 @@ end.
     && run.stdout.includes("LightPT: задание выполнено")
     && run.lightPT?.checked
     && run.lightPT.passed
+    && secondRun.success
+    && secondRun.stdout.includes("3")
+    && secondRun.lightPT?.passed
     && wrong.success
     && wrong.lightPT?.checked
     && !wrong.lightPT.passed
@@ -38,7 +53,7 @@ end.
     && afterLightPT.success
     && afterLightPT.stdout === "обычный вывод восстановлен\n";
   progressElement.textContent = passed ? "PASS" : "FAIL";
-  resultElement.textContent = JSON.stringify({ passed, run, wrong, afterLightPT }, null, 2);
+  resultElement.textContent = JSON.stringify({ passed, run, secondRun, wrong, afterLightPT }, null, 2);
 } catch (error) {
   progressElement.textContent = "FATAL";
   resultElement.textContent = JSON.stringify({ fatal: String(error), stack: error?.stack }, null, 2);

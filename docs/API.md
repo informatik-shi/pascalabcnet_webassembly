@@ -124,6 +124,7 @@ const program = await fetch("./Program.pas").then(response => response.text());
 const tasks = await fetch("./Tasks.pas").then(response => response.text());
 
 const result = await PascalABC.run(program, {
+  stdin: "5\n3 8 12 5 16\n",
   lightPT: { tasks, taskName: "CountDivisibleByFour" },
   timeout: 3000
 });

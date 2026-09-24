@@ -45,11 +45,26 @@ end.</textarea></label>
       <button id="load-plotwpf" title="Загрузить пример графиков Canvas 2D">Пример PlotWPF</button>
       <button id="load-graphics3d" title="Загрузить пример WebGL 3D">Пример Graph3D</button>
       <button id="load-lightpt" title="Загрузить программу со скрытым Tasks.pas">Пример LightPT</button>
+      <button id="show-lightpt-source" aria-expanded="false" hidden>Код решения и проверки</button>
       <span id="status"></span>
     </div>
     <section id="graphics" class="result-card graphics-card" hidden>
       <div class="result-heading"><h2 id="graphics-title">Графика</h2><span id="graphics-renderer">Canvas 2D</span></div>
       <div class="canvas-shell"><canvas id="graphics-canvas" width="800" height="500"></canvas></div>
+    </section>
+    <section id="lightpt-source" class="result-card lightpt-source-card" hidden>
+      <div class="result-heading"><h2>LightPT: два отдельных файла</h2><span>режим преподавателя</span></div>
+      <p class="lightpt-source-note">Ученик редактирует только <code>Program.pas</code>. Сайт передаёт <code>Tasks.pas</code> компилятору отдельно и не добавляет его код в редактор.</p>
+      <div class="source-grid">
+        <article class="source-file">
+          <h3>Program.pas · решение ученика</h3>
+          <pre id="lightpt-program-source"></pre>
+        </article>
+        <article class="source-file">
+          <h3>Tasks.pas · скрытый решатель и тесты</h3>
+          <pre id="lightpt-tasks-source"></pre>
+        </article>
+      </div>
     </section>
     <section class="result-card">
       <h2>Вывод</h2>

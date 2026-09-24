@@ -239,6 +239,13 @@ ol { margin: 0; padding-left: 24px; }
 .canvas-shell canvas { display: block; width: 100%; height: auto; max-height: 72vh; object-fit: contain; }
 .diagnostics-card { background: linear-gradient(110deg, var(--danger-soft), var(--surface) 38%); }
 .tests-card { background: linear-gradient(110deg, var(--success-soft), var(--surface) 38%); }
+.lightpt-source-card { border-left: 4px solid var(--accent); }
+.lightpt-source-note { margin: 0 0 16px; color: var(--muted); line-height: 1.55; }
+.lightpt-source-note code { color: var(--text); }
+.source-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.source-file { min-width: 0; }
+.source-file h3 { margin: 0 0 8px; color: var(--text); font-size: 13px; }
+.source-file pre { min-height: 280px; max-height: 480px; overflow: auto; font-size: 13px; }
 #diagnostics li { margin: 6px 0; color: var(--danger); cursor: pointer; }
 #tests li { margin: 8px 0; }
 #tests .passed { color: var(--success); }
@@ -248,6 +255,7 @@ ol { margin: 0; padding-left: 24px; }
   header { align-items: flex-start; gap: 12px; flex-direction: column; }
   .header-actions { justify-content: space-between; width: 100%; }
   .workspace { grid-template-columns: 1fr; }
+  .source-grid { grid-template-columns: 1fr; }
 }
 
 @media (max-width: 520px) {

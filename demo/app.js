@@ -1,7 +1,7 @@
 import { PascalABC } from "../dist/pascalabc-web.js";
 
 const elements = Object.fromEntries(
-  ["version", "code", "input", "run", "stop", "check", "status", "output", "diagnostics", "tests", "task", "mode-run", "mode-task", "load-graphics", "load-plotwpf", "load-graphics3d", "load-lightpt", "graphics", "graphics-title", "graphics-renderer", "graphics-canvas"]
+  ["version", "code", "input", "run", "stop", "check", "status", "output", "diagnostics", "tests", "task", "mode-run", "mode-task", "load-graphics", "load-plotwpf", "load-graphics3d", "load-lightpt", "show-lightpt-source", "lightpt-source", "lightpt-program-source", "lightpt-tasks-source", "graphics", "graphics-title", "graphics-renderer", "graphics-canvas"]
     .map(id => [id, document.getElementById(id)])
 );
 
@@ -55,6 +55,13 @@ begin
 end.`;
 
 let lightPTAssignment = null;
+
+function hideLightPTSources() {
+  elements["show-lightpt-source"].hidden = true;
+  elements["show-lightpt-source"].setAttribute("aria-expanded", "false");
+  elements["show-lightpt-source"].textContent = "Код решения и проверки";
+  elements["lightpt-source"].hidden = true;
+}
 
 const graphics3DExample = `uses Graph3D;
 
@@ -176,6 +183,7 @@ elements["mode-task"].addEventListener("click", () => selectMode(true));
 elements["load-graphics"].addEventListener("click", () => {
   selectMode(false);
   lightPTAssignment = null;
+  hideLightPTSources();
   elements.code.value = graphicsExample;
   elements.input.value = "";
   elements.status.textContent = "Пример GraphWPF загружен — нажмите Run";
@@ -184,6 +192,7 @@ elements["load-graphics"].addEventListener("click", () => {
 elements["load-plotwpf"].addEventListener("click", () => {
   selectMode(false);
   lightPTAssignment = null;
+  hideLightPTSources();
   elements.code.value = plotWPFExample;
   elements.input.value = "";
   elements.status.textContent = "Пример PlotWPF загружен — нажмите Run";
@@ -192,6 +201,7 @@ elements["load-plotwpf"].addEventListener("click", () => {
 elements["load-graphics3d"].addEventListener("click", () => {
   selectMode(false);
   lightPTAssignment = null;
+  hideLightPTSources();
   elements.code.value = graphics3DExample;
   elements.input.value = "";
   elements.status.textContent = "Пример Graph3D загружен — нажмите Run";
@@ -206,9 +216,15 @@ elements["load-lightpt"].addEventListener("click", async () => {
     ]);
     selectMode(false);
     elements.code.value = program;
-    elements.input.value = "";
+    elements.input.value = "5\n3 8 12 5 16\n";
     lightPTAssignment = { tasks, taskName: "CountDivisibleByFour" };
-    elements.status.textContent = "Программа загружена; скрытый Tasks.pas подключится автоматически";
+    elements["lightpt-program-source"].textContent = program;
+    elements["lightpt-tasks-source"].textContent = tasks;
+    elements["show-lightpt-source"].hidden = false;
+    elements["show-lightpt-source"].setAttribute("aria-expanded", "false");
+    elements["show-lightpt-source"].textContent = "Код решения и проверки";
+    elements["lightpt-source"].hidden = true;
+    elements.status.textContent = "Program.pas загружен; скрытый Tasks.pas подключится автоматически";
     elements.code.focus();
   } catch (error) {
     elements.output.textContent = String(error);
@@ -216,6 +232,14 @@ elements["load-lightpt"].addEventListener("click", async () => {
   } finally {
     setBusy(false, elements.status.textContent);
   }
+});
+elements["show-lightpt-source"].addEventListener("click", () => {
+  const shouldShow = elements["lightpt-source"].hidden;
+  elements["lightpt-source"].hidden = !shouldShow;
+  elements["show-lightpt-source"].setAttribute("aria-expanded", String(shouldShow));
+  elements["show-lightpt-source"].textContent = shouldShow
+    ? "Скрыть код проверки"
+    : "Код решения и проверки";
 });
 elements.code.addEventListener("keydown", event => {
   if (event.key === "Enter" && (event.ctrlKey || event.metaKey)) {
