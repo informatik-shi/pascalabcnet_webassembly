@@ -33,6 +33,9 @@
 | Network APIs | ✓ | ✗ | Блокируются после runtime initialization |
 | Threads/tasks | ✓ | ограниченно | Нет гарантии для произвольных threading сценариев; не заявлено MVP |
 | Reflection | ✓ | ограниченно | Только загруженные managed assemblies Worker |
+| GraphWPF: базовые примитивы и текст | ✓ | ограниченно | Canvas 2D; `tests/graphics/graphwpf-basic.pas` |
+| GraphWPF: animation/input/images | ✓ | ✗ | Следующий этап graphics transport |
+| Graph3D | ✓ | ✗ | Спроектирован WebGL scene protocol; реализация ещё не заявлена |
 | GraphABC | ✓ | ✗ | Windows/UI dependency |
 | FormsABC/WinForms/WPF | ✓ | ✗ | Windows/UI dependency |
 | Debugger и IDE plugins | ✓ | ✗ | Не входят в compiler host |

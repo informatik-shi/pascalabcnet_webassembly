@@ -1,3 +1,5 @@
+import { CanvasGraphicsRenderer } from "./pascalabc-graphics.js";
+
 const DEFAULT_TIMEOUT = 3000;
 const DEFAULT_INIT_TIMEOUT = 120000;
 const DEFAULT_COMPILE_TIMEOUT = 30000;
@@ -18,6 +20,7 @@ class PascalABCClient {
     this.nextId = 1;
     this.version = null;
     this.options = {};
+    this.graphicsRenderer = null;
   }
 
   async init(options = {}) {
@@ -104,6 +107,17 @@ class PascalABCClient {
     this.#terminate(new Error("PascalABC.NET worker was stopped."));
   }
 
+  attachCanvas(canvas, options = {}) {
+    this.graphicsRenderer = new CanvasGraphicsRenderer(canvas, options);
+    return this.graphicsRenderer;
+  }
+
+  detachCanvas() {
+    const renderer = this.graphicsRenderer;
+    this.graphicsRenderer = null;
+    return renderer;
+  }
+
   async #withTimeoutResult(operation, timeout) {
     try {
       return await operation();
@@ -145,6 +159,10 @@ class PascalABCClient {
   }
 
   #onMessage(message) {
+    if (message.type === "graphics") {
+      this.graphicsRenderer?.handle(message.envelope);
+      return;
+    }
     if (message.type === "ready") {
       const pending = this.pending.get("ready");
       if (pending) {
@@ -184,4 +202,4 @@ class PascalABCClient {
 }
 
 export const PascalABC = new PascalABCClient();
-export { PascalABCClient, PascalABCTimeoutError };
+export { CanvasGraphicsRenderer, PascalABCClient, PascalABCTimeoutError };

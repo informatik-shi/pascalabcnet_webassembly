@@ -8,6 +8,7 @@ using Languages.Pascal;
 using PascalABCCompiler;
 using PascalABCCompiler.Errors;
 using PascalABCCompiler.NetHelper;
+using PascalABC.Web.Graphics;
 
 namespace PascalABC.Web.Runtime;
 
@@ -288,6 +289,7 @@ public static partial class BrowserCompilerHost
         var timer = Stopwatch.StartNew();
         try
         {
+            BrowserGraphicsBridge.BeginExecution();
             AppDomain.CurrentDomain.SetData(StdinKey, input);
             AppDomain.CurrentDomain.SetData(StdoutKey, output);
             var assembly = Assembly.Load(assemblyBytes);

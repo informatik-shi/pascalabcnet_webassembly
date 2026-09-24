@@ -1,9 +1,38 @@
 import { PascalABC } from "../dist/pascalabc-web.js";
 
 const elements = Object.fromEntries(
-  ["version", "code", "input", "run", "stop", "check", "status", "output", "diagnostics", "tests", "task", "mode-run", "mode-task"]
+  ["version", "code", "input", "run", "stop", "check", "status", "output", "diagnostics", "tests", "task", "mode-run", "mode-task", "load-graphics", "graphics", "graphics-title", "graphics-canvas"]
     .map(id => [id, document.getElementById(id)])
 );
+
+const graphicsExample = `uses GraphWPF;
+
+begin
+  Window.SetSize(800, 500);
+  Window.Title := 'GraphWPF в браузере';
+  Window.Clear(Colors.WhiteSmoke);
+
+  Pen.Width := 3;
+  Pen.Color := Colors.RoyalBlue;
+  Brush.Color := RGB(210, 230, 255);
+  Rectangle(60, 70, 250, 150);
+
+  Brush.Color := Colors.Gold;
+  Circle(440, 145, 75);
+  Line(60, 280, 680, 280, Colors.DarkGray);
+
+  var points := Arr(Pnt(540, 370), Pnt(610, 310),
+    Pnt(680, 370), Pnt(650, 440), Pnt(570, 440));
+  Brush.Color := Colors.LightGreen;
+  Polygon(points);
+
+  Font.Size := 26;
+  Font.Color := Colors.DarkRed;
+  TextOut(185, 145, 'PascalABC.NET', Alignment.Center);
+  Font.Size := 18;
+  Font.Color := Colors.Black;
+  TextOut(440, 145, 'Canvas 2D', Alignment.Center);
+end.`;
 
 const assignmentTests = [
   { input: "2\n3\n", expected: "5\n" },
@@ -40,6 +69,7 @@ async function run() {
   setBusy(true, "Компиляция и выполнение…");
   showDiagnostics();
   elements.output.textContent = "";
+  elements.graphics.hidden = true;
   try {
     const result = await PascalABC.run(elements.code.value, {
       stdin: elements.input.value,
@@ -104,10 +134,27 @@ elements.stop.addEventListener("click", () => {
 });
 elements["mode-run"].addEventListener("click", () => selectMode(false));
 elements["mode-task"].addEventListener("click", () => selectMode(true));
+elements["load-graphics"].addEventListener("click", () => {
+  selectMode(false);
+  elements.code.value = graphicsExample;
+  elements.input.value = "";
+  elements.status.textContent = "Пример GraphWPF загружен — нажмите Run";
+  elements.code.focus();
+});
 elements.code.addEventListener("keydown", event => {
   if (event.key === "Enter" && (event.ctrlKey || event.metaKey)) {
     event.preventDefault();
     elements.run.hidden ? check() : run();
+  }
+});
+
+PascalABC.attachCanvas(elements["graphics-canvas"], {
+  onOpen(details) {
+    elements.graphics.hidden = false;
+    elements["graphics-title"].textContent = details.title || "Графика";
+  },
+  onTitle(title) {
+    elements["graphics-title"].textContent = title || "Графика";
   }
 });
 

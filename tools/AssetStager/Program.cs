@@ -21,7 +21,8 @@ var runtimeAssets = NetCoreSystemReferences.AssemblyPaths
         Path.Combine(NetCoreSystemReferences.RuntimeDirectory, "mscorlib.dll"),
         Path.Combine(NetCoreSystemReferences.RuntimeDirectory, "System.dll"),
         Path.Combine(NetCoreSystemReferences.RuntimeDirectory, "System.Core.dll"),
-        Path.Combine(NetCoreSystemReferences.RuntimeDirectory, "netstandard.dll")
+        Path.Combine(NetCoreSystemReferences.RuntimeDirectory, "netstandard.dll"),
+        Path.Combine(pascalBin, "Lib", "PascalABC.Web.Graphics.dll")
     })
     .Distinct(StringComparer.OrdinalIgnoreCase);
 
@@ -40,11 +41,14 @@ foreach (var fileName in new[]
              "PABCSystem.pcu",
              "PABCExtensions.pcu",
              "PABCSystem.pas",
-             "PABCExtensions.pas"
+             "PABCExtensions.pas",
+             "GraphWPF.pcu",
+             "GraphWPF.pas"
          })
 {
     var sourcePath = Path.Combine(pascalBin, "Lib", fileName);
-    if (Path.GetExtension(fileName).Equals(".pas", StringComparison.OrdinalIgnoreCase))
+    if ((fileName.Equals("PABCSystem.pas", StringComparison.OrdinalIgnoreCase)
+         || fileName.Equals("PABCExtensions.pas", StringComparison.OrdinalIgnoreCase)))
     {
         var repositorySourcePath = Path.Combine(
             Directory.GetParent(pascalBin)?.FullName ?? pascalBin,

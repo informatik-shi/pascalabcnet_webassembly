@@ -2,6 +2,11 @@ import { dotnet } from "./_framework/dotnet.js";
 
 const runtimePromise = (async () => {
   const runtime = await dotnet.create();
+  runtime.setModuleImports("pascalabc.graphics", {
+    emit(commandJson) {
+      self.postMessage({ type: "graphics", envelope: JSON.parse(commandJson) });
+    }
+  });
   const config = runtime.getConfig();
   const exports = await runtime.getAssemblyExports(config.mainAssemblyName);
   const invoke = exports.PascalABC.Web.Runtime.BrowserCompilerHost.Invoke;

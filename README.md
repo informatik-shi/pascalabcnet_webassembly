@@ -93,7 +93,7 @@ const result = await PascalABC.check(studentCode, [
 
 ## Ограничения MVP
 
-Поддерживаются учебные console programs. GraphABC, FormsABC, desktop debugger/IDE plugins и доступ к пользовательской файловой системе не поддерживаются. Worker — важная граница отзывчивости, но не OS sandbox; для недоверенного кода используйте отдельный origin. См. [docs/SECURITY.md](docs/SECURITY.md) и [docs/COMPATIBILITY.md](docs/COMPATIBILITY.md).
+Поддерживаются учебные console programs и первый browser subset `GraphWPF` на Canvas 2D. В demo нажмите «Пример GraphWPF», затем Run. `Graph3D` спроектирован для WebGL, но пока не заявлен как реализованный. GraphABC, FormsABC, desktop debugger/IDE plugins и доступ к пользовательской файловой системе не поддерживаются. Worker — важная граница отзывчивости, но не OS sandbox; для недоверенного кода используйте отдельный origin. См. [docs/GRAPHICS.md](docs/GRAPHICS.md), [docs/SECURITY.md](docs/SECURITY.md) и [docs/COMPATIBILITY.md](docs/COMPATIBILITY.md).
 
 ## Лицензии
 

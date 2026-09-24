@@ -18,5 +18,6 @@
   <ItemGroup>
     <ProjectReference Include="..\..\upstream\pascalabcnet\Compiler\Compiler.csproj" />
     <ProjectReference Include="..\..\upstream\pascalabcnet\PascalABCLanguageInfo\PascalABCLanguageInfo.csproj" />
+    <ProjectReference Include="..\PascalABC.Web.Graphics\PascalABC.Web.Graphics.csproj" />
   </ItemGroup>
 </Project>

@@ -116,3 +116,25 @@ const result = await PascalABC.check(code, [
 `trimTrailingWhitespace` удаляет пробелы справа на каждой строке; `normalizeNewlines` приводит CRLF/CR к LF; `ignoreTrailingNewline` игнорирует конечные переводы строк. Default: `true`, `true`, `false`.
 
 Полные TypeScript declarations находятся в `js/pascalabc-web.d.ts`.
+
+## Canvas и GraphWPF
+
+Перед выполнением программы с `uses GraphWPF` подключите Canvas к клиенту:
+
+```js
+PascalABC.attachCanvas(document.querySelector("#graphics"), {
+  onOpen: ({ width, height, title }) => console.log(title),
+  onTitle: title => console.log(title)
+});
+
+await PascalABC.run(`
+uses GraphWPF;
+begin
+  Window.Clear(Colors.WhiteSmoke);
+  Brush.Color := Colors.Gold;
+  Circle(400, 250, 100);
+end.
+`);
+```
+
+`attachCanvas()` возвращает `CanvasGraphicsRenderer`. `detachCanvas()` отключает текущий renderer. Graphics bridge остаётся внутри Worker и не даёт student assembly прямого доступа к DOM. Реализованный subset и план Graph3D описаны в [GRAPHICS.md](GRAPHICS.md).

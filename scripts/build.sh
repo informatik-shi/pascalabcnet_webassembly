@@ -48,6 +48,15 @@ reset_generated_directory "$bootstrap_dir"
 cp "$repo_root/tests/programs/01_hello.pas" "$bootstrap_dir/bootstrap.pas"
 "$dotnet_cmd" "$upstream_root/bin-net10/pabcnetc.dll" "$bootstrap_dir/bootstrap.pas" /rebuild /noconsole
 
+"$dotnet_cmd" build "$repo_root/src/PascalABC.Web.Graphics/PascalABC.Web.Graphics.csproj" -c "$configuration"
+cp "$repo_root/browser-units/GraphWPF.pas" "$upstream_root/bin-net10/Lib/GraphWPF.pas"
+cp "$repo_root/src/PascalABC.Web.Graphics/bin/$configuration/net10.0/PascalABC.Web.Graphics.dll" "$upstream_root/bin-net10/Lib/PascalABC.Web.Graphics.dll"
+graphics_bootstrap_dir="$repo_root/artifacts/graphics"
+reset_generated_directory "$graphics_bootstrap_dir"
+cp "$repo_root/tests/graphics/graphwpf-basic.pas" "$graphics_bootstrap_dir/graphwpf-basic.pas"
+"$dotnet_cmd" "$upstream_root/bin-net10/pabcnetc.dll" "$graphics_bootstrap_dir/graphwpf-basic.pas" /rebuild /noconsole
+test -f "$upstream_root/bin-net10/Lib/GraphWPF.pcu"
+
 asset_dir="$repo_root/src/PascalABC.Web.Runtime/wwwroot/pabc-assets"
 reset_generated_directory "$asset_dir"
 "$dotnet_cmd" run --project "$repo_root/tools/AssetStager/AssetStager.csproj" -c "$configuration" -- "$upstream_root/bin-net10" "$asset_dir"
@@ -58,7 +67,7 @@ dist_dir="$repo_root/dist"
 reset_generated_directory "$dist_dir"
 cp -R "$publish_dir/." "$dist_dir/"
 find "$dist_dir" -type f -name '*.gz' -delete
-cp "$repo_root/js/pascalabc-web.js" "$repo_root/js/pascalabc-worker.js" "$repo_root/js/pascalabc-web.d.ts" "$dist_dir/"
+cp "$repo_root/js/pascalabc-web.js" "$repo_root/js/pascalabc-worker.js" "$repo_root/js/pascalabc-graphics.js" "$repo_root/js/pascalabc-web.d.ts" "$dist_dir/"
 mkdir -p "$dist_dir/licenses"
 cp "$upstream_root/doc/License_en.txt" "$dist_dir/licenses/PascalABC.NET-LICENSE.txt"
 

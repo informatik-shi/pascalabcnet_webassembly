@@ -16,6 +16,7 @@ Worker/WASM **не является криптографической или OS
 - `timeout` вызывает `Worker.terminate()`. Это единственный надёжный способ остановить некооперативный managed loop.
 - Временные source/PE/PDB/runtimeconfig удаляются после компиляции; сохранено не более 16 PE artifacts в памяти.
 - Операции сериализуются, чтобы глобальное состояние upstream compiler не использовалось конкурентно.
+- Browser `GraphWPF` вызывает только типизированный managed graphics bridge. Worker пересылает версионированные команды рисования на main thread; student assembly не получает Canvas, DOM или произвольный JS interop.
 
 ## Остаточные риски
 

@@ -10,6 +10,9 @@ $repositoryRoot = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
 $upstreamRoot = Join-Path $repositoryRoot 'upstream\pascalabcnet'
 $browserPatch = Join-Path $repositoryRoot 'patches\pascalabcnet-browser.patch'
 $runtimeProject = Join-Path $repositoryRoot 'src\PascalABC.Web.Runtime\PascalABC.Web.Runtime.csproj'
+$graphicsProject = Join-Path $repositoryRoot 'src\PascalABC.Web.Graphics\PascalABC.Web.Graphics.csproj'
+$graphicsUnit = Join-Path $repositoryRoot 'browser-units\GraphWPF.pas'
+$graphicsTest = Join-Path $repositoryRoot 'tests\graphics\graphwpf-basic.pas'
 $assetDestination = Join-Path $repositoryRoot 'src\PascalABC.Web.Runtime\wwwroot\pabc-assets'
 $publishDirectory = Join-Path $repositoryRoot "src\PascalABC.Web.Runtime\bin\$Configuration\net10.0\publish\wwwroot"
 $distributionDirectory = Join-Path $repositoryRoot 'dist'
@@ -86,6 +89,20 @@ try {
     & $dotnet (Join-Path $pascalBin 'pabcnetc.dll') $bootstrapSource /rebuild /noconsole
     Assert-LastExitCode 'PascalABC.NET standard library rebuild'
 
+    & $dotnet build $graphicsProject -c $Configuration
+    Assert-LastExitCode 'browser graphics bridge build'
+    Copy-Item -LiteralPath $graphicsUnit -Destination (Join-Path $pascalLib 'GraphWPF.pas') -Force
+    Copy-Item -LiteralPath (Join-Path $repositoryRoot "src\PascalABC.Web.Graphics\bin\$Configuration\net10.0\PascalABC.Web.Graphics.dll") -Destination $pascalLib -Force
+    $graphicsBootstrapDirectory = Join-Path $repositoryRoot 'artifacts\graphics'
+    Reset-GeneratedDirectory $graphicsBootstrapDirectory
+    $graphicsBootstrapSource = Join-Path $graphicsBootstrapDirectory 'graphwpf-basic.pas'
+    Copy-Item -LiteralPath $graphicsTest -Destination $graphicsBootstrapSource
+    & $dotnet (Join-Path $pascalBin 'pabcnetc.dll') $graphicsBootstrapSource /rebuild /noconsole
+    Assert-LastExitCode 'GraphWPF browser unit rebuild'
+    if (-not (Test-Path -LiteralPath (Join-Path $pascalLib 'GraphWPF.pcu'))) {
+        throw 'GraphWPF browser unit did not produce GraphWPF.pcu.'
+    }
+
     Reset-GeneratedDirectory $assetDestination
     & $dotnet run --project (Join-Path $repositoryRoot 'tools\AssetStager\AssetStager.csproj') -c $Configuration -- $pascalBin $assetDestination
     Assert-LastExitCode 'browser asset staging'
@@ -100,6 +117,7 @@ try {
     Get-ChildItem -LiteralPath $distributionDirectory -Filter '*.gz' -File -Recurse | Remove-Item -Force
     Copy-Item -LiteralPath (Join-Path $repositoryRoot 'js\pascalabc-web.js') -Destination $distributionDirectory
     Copy-Item -LiteralPath (Join-Path $repositoryRoot 'js\pascalabc-worker.js') -Destination $distributionDirectory
+    Copy-Item -LiteralPath (Join-Path $repositoryRoot 'js\pascalabc-graphics.js') -Destination $distributionDirectory
     Copy-Item -LiteralPath (Join-Path $repositoryRoot 'js\pascalabc-web.d.ts') -Destination $distributionDirectory
     $licenseDirectory = Join-Path $distributionDirectory 'licenses'
     New-Item -ItemType Directory -Path $licenseDirectory | Out-Null
@@ -107,7 +125,8 @@ try {
 
     $sizeTargets = @(
         (Join-Path $distributionDirectory 'pascalabc-web.js'),
-        (Join-Path $distributionDirectory 'pascalabc-worker.js')
+        (Join-Path $distributionDirectory 'pascalabc-worker.js'),
+        (Join-Path $distributionDirectory 'pascalabc-graphics.js')
     ) + (Get-ChildItem -LiteralPath (Join-Path $distributionDirectory '_framework') -Filter 'dotnet.native*.wasm' | Select-Object -ExpandProperty FullName)
     $sizeTargets | ForEach-Object {
         $file = Get-Item -LiteralPath $_

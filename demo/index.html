@@ -41,8 +41,13 @@ end.</textarea></label>
       <button id="run" class="primary">▶ Run <kbd>Ctrl+Enter</kbd></button>
       <button id="check" hidden>Проверить</button>
       <button id="stop">■ Stop</button>
+      <button id="load-graphics" title="Загрузить пример Canvas 2D">Пример GraphWPF</button>
       <span id="status"></span>
     </div>
+    <section id="graphics" class="result-card graphics-card" hidden>
+      <div class="result-heading"><h2 id="graphics-title">Графика</h2><span>Canvas 2D</span></div>
+      <div class="canvas-shell"><canvas id="graphics-canvas" width="800" height="500"></canvas></div>
+    </section>
     <section class="result-card">
       <h2>Вывод</h2>
       <pre id="output" aria-live="polite"></pre>

@@ -19,6 +19,18 @@ export interface PascalABCRunOptions {
   compileTimeout?: number;
 }
 
+export interface PascalABCCanvasOptions {
+  onOpen?: (details: { renderer: "canvas2d"; width: number; height: number; title: string }) => void;
+  onTitle?: (title: string) => void;
+}
+
+export class CanvasGraphicsRenderer {
+  constructor(canvas: HTMLCanvasElement, options?: PascalABCCanvasOptions);
+  readonly canvas: HTMLCanvasElement;
+  handle(envelope: unknown): void;
+  clear(): void;
+}
+
 export interface PascalABCCheckOptions {
   timeout?: number;
   trimTrailingWhitespace?: boolean;
@@ -71,6 +83,8 @@ export class PascalABCClient {
   compile(code: string, options?: { timeout?: number }): Promise<PascalABCResult>;
   run(code: string, options?: PascalABCRunOptions): Promise<PascalABCResult>;
   check(code: string, tests: PascalABCTest[], options?: PascalABCCheckOptions): Promise<PascalABCCheckResult>;
+  attachCanvas(canvas: HTMLCanvasElement, options?: PascalABCCanvasOptions): CanvasGraphicsRenderer;
+  detachCanvas(): CanvasGraphicsRenderer | null;
   stop(): void;
 }
 

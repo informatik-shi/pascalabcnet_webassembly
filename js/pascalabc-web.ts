@@ -37,4 +37,4 @@ export interface PascalABCResult {
 
 // The zero-dependency JavaScript build is the package entry point. These
 // declarations document its public surface without requiring TypeScript at runtime.
-export { PascalABC, PascalABCClient, PascalABCTimeoutError } from "./pascalabc-web.js";
+export { CanvasGraphicsRenderer, PascalABC, PascalABCClient, PascalABCTimeoutError } from "./pascalabc-web.js";
