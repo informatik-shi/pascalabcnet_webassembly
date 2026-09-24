@@ -1,4 +1,4 @@
-import { CanvasGraphicsRenderer } from "./pascalabc-graphics.js";
+import { BrowserGraphicsRenderer, CanvasGraphicsRenderer, WebGLGraphicsRenderer } from "./pascalabc-graphics.js";
 
 const DEFAULT_TIMEOUT = 3000;
 const DEFAULT_INIT_TIMEOUT = 120000;
@@ -108,7 +108,7 @@ class PascalABCClient {
   }
 
   attachCanvas(canvas, options = {}) {
-    this.graphicsRenderer = new CanvasGraphicsRenderer(canvas, options);
+    this.graphicsRenderer = new BrowserGraphicsRenderer(canvas, options);
     return this.graphicsRenderer;
   }
 
@@ -202,4 +202,4 @@ class PascalABCClient {
 }
 
 export const PascalABC = new PascalABCClient();
-export { CanvasGraphicsRenderer, PascalABCClient, PascalABCTimeoutError };
+export { BrowserGraphicsRenderer, CanvasGraphicsRenderer, WebGLGraphicsRenderer, PascalABCClient, PascalABCTimeoutError };

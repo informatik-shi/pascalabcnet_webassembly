@@ -1,7 +1,7 @@
 import { PascalABC } from "../dist/pascalabc-web.js";
 
 const elements = Object.fromEntries(
-  ["version", "code", "input", "run", "stop", "check", "status", "output", "diagnostics", "tests", "task", "mode-run", "mode-task", "load-graphics", "graphics", "graphics-title", "graphics-canvas"]
+  ["version", "code", "input", "run", "stop", "check", "status", "output", "diagnostics", "tests", "task", "mode-run", "mode-task", "load-graphics", "load-graphics3d", "graphics", "graphics-title", "graphics-renderer", "graphics-canvas"]
     .map(id => [id, document.getElementById(id)])
 );
 
@@ -32,6 +32,20 @@ begin
   Font.Size := 18;
   Font.Color := Colors.Black;
   TextOut(440, 145, 'Canvas 2D', Alignment.Center);
+end.`;
+
+const graphics3DExample = `uses Graph3D;
+
+begin
+  Window.SetSize(800, 500);
+  Window.Title := 'Graph3D в браузере';
+  View3D.BackgroundColor := RGB(15, 23, 42);
+
+  var cube := Cube(-2.7, 0, 1.1, 2.2, Colors.RoyalBlue);
+  cube.Rotate(V3D(0, 0, 1), 25);
+  Sphere(0.2, 0, 1.2, 1.2, Colors.Gold);
+  Cylinder(3, 0, 1.3, 2.6, 0.85, Colors.LightGreen);
+  Cone(0, 3.2, 1.4, 2.8, 1.2, Colors.Coral);
 end.`;
 
 const assignmentTests = [
@@ -141,6 +155,13 @@ elements["load-graphics"].addEventListener("click", () => {
   elements.status.textContent = "Пример GraphWPF загружен — нажмите Run";
   elements.code.focus();
 });
+elements["load-graphics3d"].addEventListener("click", () => {
+  selectMode(false);
+  elements.code.value = graphics3DExample;
+  elements.input.value = "";
+  elements.status.textContent = "Пример Graph3D загружен — нажмите Run";
+  elements.code.focus();
+});
 elements.code.addEventListener("keydown", event => {
   if (event.key === "Enter" && (event.ctrlKey || event.metaKey)) {
     event.preventDefault();
@@ -152,6 +173,7 @@ PascalABC.attachCanvas(elements["graphics-canvas"], {
   onOpen(details) {
     elements.graphics.hidden = false;
     elements["graphics-title"].textContent = details.title || "Графика";
+    elements["graphics-renderer"].textContent = details.renderer === "webgl2" ? "WebGL 2 · мышь: вращение и масштаб" : "Canvas 2D";
   },
   onTitle(title) {
     elements["graphics-title"].textContent = title || "Графика";

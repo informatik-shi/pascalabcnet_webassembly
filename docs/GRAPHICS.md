@@ -6,7 +6,7 @@
 
 PascalABC.Web поэтому предоставляет browser compatibility units с теми же именами. Это не подмена компилятора: исходный код ученика по-прежнему проходит оригинальные parser, semantic analyzer и IL generator PascalABC.NET. Заменяется только платформенный graphics backend.
 
-## Реализованный путь GraphWPF
+## Реализованный путь GraphWPF и Graph3D
 
 ```text
 program.pas (`uses GraphWPF`)
@@ -15,13 +15,13 @@ program.pas (`uses GraphWPF`)
   → PascalABC.Web.Graphics managed bridge
   → JS interop внутри Worker
   → typed graphics message
-  → CanvasGraphicsRenderer на main thread
-  → HTML Canvas 2D
+  → BrowserGraphicsRenderer на main thread
+  → HTML Canvas 2D или WebGL 2
 ```
 
 Student assembly не получает DOM, `postMessage`, `fetch` или JavaScript global scope. Единственная доступная поверхность — типизированные методы graphics bridge. Протокол версионирован полем `protocol`; команда также содержит `executionId`, поэтому renderer различает последовательные запуски.
 
-Первый вертикальный срез поддерживает:
+GraphWPF поддерживает:
 
 - `Window.SetSize`, `Window.Title`, `Window.Clear`, размеры и центр окна;
 - `Colors`, `RGB`, `ARGB`, `RandomColor`;
@@ -35,6 +35,17 @@ Student assembly не получает DOM, `postMessage`, `fetch` или JavaSc
 - HiDPI Canvas с адаптивным отображением в demo.
 
 Пока не поддержаны pixel batches/images/video, сохранение файлов/clipboard, frame-based animation, мышь/клавиатура и WPF-specific drawing objects. `TextSize` сейчас использует предсказуемую метрическую оценку, потому что синхронный DOM measurement из Worker нарушил бы sandbox и модель выполнения.
+
+Graph3D MVP поддерживает:
+
+- `P3D`, `V3D`, `Sz3D`, базовые материалы и палитру `Colors`;
+- `Sphere`, `Cube`, `Box`, `Cylinder`, `Cone`, `TruncatedCone`;
+- `MoveTo/MoveBy`, осевые перемещения, `Scale/ScaleX/Y/Z`, `Rotate`, изменение цвета и удаление объекта;
+- `View3D` (сетка, оси, фон, заголовок), `Window.SetSize` и базовую `Camera`;
+- depth buffer, перспективную камеру, Lambert-освещение и генерируемые в браузере меши;
+- orbit camera: перетаскивание мышью вращает сцену, колесо меняет расстояние.
+
+При переключении между GraphWPF и Graph3D renderer заменяет backing canvas, потому что браузер не позволяет одному canvas одновременно иметь контексты `2d` и `webgl2`. Новый элемент сохраняет id, классы и обработчики верхнего уровня API.
 
 ## JavaScript API
 
@@ -57,18 +68,16 @@ end.
 
 Без `attachCanvas` программа остаётся безопасно исполнимой, но graphics messages игнорируются main thread.
 
-## План Graph3D
+## Следующие этапы Graph3D
 
-`Graph3D` должен использовать тот же элемент `<canvas>`, но не Canvas 2D. Для глубины, камеры, освещения и мешей нужен WebGL2 renderer (с WebGL1 fallback). Обычная 2D-проекция на Canvas не сохранит семантику исходного модуля.
+`Graph3D` использует тот же элемент `<canvas>`, но WebGL 2 вместо Canvas 2D. Обычная 2D-проекция не сохранила бы семантику исходного модуля.
 
 План переноса:
 
-1. Browser unit `Graph3D.pas` с совместимыми `Point3D`, `Vector3D`, `Material`, `Camera`, `View3D` и объектными handle-классами.
-2. Scene protocol: `create`, `transform`, `material`, `visibility`, `remove`, camera/light commands. Каждый объект получает стабильный числовой id.
-3. WebGL scene graph и mesh generators для `Sphere`, `Cube/Box`, `Cylinder/Cone`, `Prism/Pyramid`, линий и координатных осей.
-4. Orbit camera, perspective/orthographic projection, ambient/directional/point light и базовый Lambert/Phong material.
-5. Анимации исполняются renderer’ом через `requestAnimationFrame`; Pascal передаёт параметры tween/trajectory, а не рисует каждый кадр через JS interop.
-6. Двусторонние события. Canvas events идут main thread → Worker → сохранённый Pascal delegate отдельной runtime-операцией. Каждый callback получает собственный timeout.
-7. Поздние функции: text billboards, textures, picking, grouping/cloning. WPF serialization, произвольные Helix meshes и desktop file dialogs не входят в начальный scope.
+1. Дополнительные примитивы: `Prism/Pyramid`, плоскости, линии, стрелки и составные объекты.
+2. Orthographic projection, настраиваемые источники света и Phong/specular materials.
+3. Анимации через `requestAnimationFrame`: Pascal передаёт параметры tween/trajectory, а не рисует каждый кадр через JS interop.
+4. Двусторонние события и picking. Canvas events идут main thread → Worker → сохранённый Pascal delegate отдельной runtime-операцией с timeout.
+5. Text billboards, textures, grouping/cloning и WebGL1 fallback. WPF serialization, произвольные Helix meshes и desktop file dialogs не входят в browser scope.
 
 Такое разделение позволяет развивать 2D и 3D независимо, сохраняя один sandboxed transport и не включая тяжёлую WebGL-библиотеку в console-only загрузку.

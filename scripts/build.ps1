@@ -13,6 +13,8 @@ $runtimeProject = Join-Path $repositoryRoot 'src\PascalABC.Web.Runtime\PascalABC
 $graphicsProject = Join-Path $repositoryRoot 'src\PascalABC.Web.Graphics\PascalABC.Web.Graphics.csproj'
 $graphicsUnit = Join-Path $repositoryRoot 'browser-units\GraphWPF.pas'
 $graphicsTest = Join-Path $repositoryRoot 'tests\graphics\graphwpf-basic.pas'
+$graphics3DUnit = Join-Path $repositoryRoot 'browser-units\Graph3D.pas'
+$graphics3DTest = Join-Path $repositoryRoot 'tests\graphics\graph3d-basic.pas'
 $assetDestination = Join-Path $repositoryRoot 'src\PascalABC.Web.Runtime\wwwroot\pabc-assets'
 $publishDirectory = Join-Path $repositoryRoot "src\PascalABC.Web.Runtime\bin\$Configuration\net10.0\publish\wwwroot"
 $distributionDirectory = Join-Path $repositoryRoot 'dist'
@@ -101,6 +103,16 @@ try {
     Assert-LastExitCode 'GraphWPF browser unit rebuild'
     if (-not (Test-Path -LiteralPath (Join-Path $pascalLib 'GraphWPF.pcu'))) {
         throw 'GraphWPF browser unit did not produce GraphWPF.pcu.'
+    }
+    Copy-Item -LiteralPath $graphics3DUnit -Destination (Join-Path $pascalLib 'Graph3D.pas') -Force
+    $graphics3DBootstrapDirectory = Join-Path $repositoryRoot 'artifacts\graphics3d'
+    Reset-GeneratedDirectory $graphics3DBootstrapDirectory
+    $graphics3DBootstrapSource = Join-Path $graphics3DBootstrapDirectory 'graph3d-basic.pas'
+    Copy-Item -LiteralPath $graphics3DTest -Destination $graphics3DBootstrapSource
+    & $dotnet (Join-Path $pascalBin 'pabcnetc.dll') $graphics3DBootstrapSource /rebuild /noconsole
+    Assert-LastExitCode 'Graph3D browser unit rebuild'
+    if (-not (Test-Path -LiteralPath (Join-Path $pascalLib 'Graph3D.pcu'))) {
+        throw 'Graph3D browser unit did not produce Graph3D.pcu.'
     }
 
     Reset-GeneratedDirectory $assetDestination

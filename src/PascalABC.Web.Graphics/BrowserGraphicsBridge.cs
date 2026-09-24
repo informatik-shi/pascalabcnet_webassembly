@@ -17,6 +17,7 @@ public static partial class BrowserGraphicsBridge
     private static int width = DefaultWidth;
     private static int height = DefaultHeight;
     private static string title = "GraphWPF";
+    private static int nextObjectId;
 
     [JSImport("emit", "pascalabc.graphics")]
     private static partial void EmitToJavaScript(string commandJson);
@@ -28,6 +29,7 @@ public static partial class BrowserGraphicsBridge
         width = DefaultWidth;
         height = DefaultHeight;
         title = "GraphWPF";
+        nextObjectId = 0;
     }
 
     public static void Open(int requestedWidth, int requestedHeight, string? requestedTitle)
@@ -38,6 +40,58 @@ public static partial class BrowserGraphicsBridge
         Emit(new { op = "open", renderer = "canvas2d", width, height, title });
         opened = true;
     }
+
+    public static void Open3D(int requestedWidth, int requestedHeight, string? requestedTitle, int backgroundColor)
+    {
+        width = Math.Clamp(requestedWidth, 1, 4096);
+        height = Math.Clamp(requestedHeight, 1, 4096);
+        title = string.IsNullOrWhiteSpace(requestedTitle) ? "Graph3D" : requestedTitle;
+        Emit(new { op = "open", renderer = "webgl2", width, height, title, backgroundColor });
+        opened = true;
+    }
+
+    public static int Create3D(
+        string shape,
+        double x,
+        double y,
+        double z,
+        double sizeX,
+        double sizeY,
+        double sizeZ,
+        int color,
+        double topScale)
+    {
+        var id = ++nextObjectId;
+        Emit(new { op = "create3d", id, shape, x, y, z, sizeX, sizeY, sizeZ, color, topScale });
+        return id;
+    }
+
+    public static void Move3D(int id, double x, double y, double z)
+        => Emit(new { op = "move3d", id, x, y, z });
+
+    public static void Scale3D(int id, double x, double y, double z)
+        => Emit(new { op = "scale3d", id, x, y, z });
+
+    public static void Rotate3D(int id, double axisX, double axisY, double axisZ, double angle)
+        => Emit(new { op = "rotate3d", id, axisX, axisY, axisZ, angle });
+
+    public static void SetColor3D(int id, int color)
+        => Emit(new { op = "color3d", id, color });
+
+    public static void Remove3D(int id)
+        => Emit(new { op = "remove3d", id });
+
+    public static void SetView3D(bool showGrid, bool showAxes, int backgroundColor)
+        => Emit(new { op = "view3d", showGrid, showAxes, backgroundColor });
+
+    public static void SetCamera3D(
+        double x,
+        double y,
+        double z,
+        double targetX,
+        double targetY,
+        double targetZ)
+        => Emit(new { op = "camera3d", x, y, z, targetX, targetY, targetZ });
 
     public static void Resize(int requestedWidth, int requestedHeight)
     {

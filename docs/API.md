@@ -137,4 +137,4 @@ end.
 `);
 ```
 
-`attachCanvas()` возвращает `CanvasGraphicsRenderer`. `detachCanvas()` отключает текущий renderer. Graphics bridge остаётся внутри Worker и не даёт student assembly прямого доступа к DOM. Реализованный subset и план Graph3D описаны в [GRAPHICS.md](GRAPHICS.md).
+`attachCanvas()` возвращает `BrowserGraphicsRenderer`, который автоматически выбирает Canvas 2D для `GraphWPF` или WebGL 2 для `Graph3D`. `detachCanvas()` отключает текущий renderer. Graphics bridge остаётся внутри Worker и не даёт student assembly прямого доступа к DOM. Реализованный subset описан в [GRAPHICS.md](GRAPHICS.md).

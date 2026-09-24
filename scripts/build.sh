@@ -57,6 +57,13 @@ cp "$repo_root/tests/graphics/graphwpf-basic.pas" "$graphics_bootstrap_dir/graph
 "$dotnet_cmd" "$upstream_root/bin-net10/pabcnetc.dll" "$graphics_bootstrap_dir/graphwpf-basic.pas" /rebuild /noconsole
 test -f "$upstream_root/bin-net10/Lib/GraphWPF.pcu"
 
+cp "$repo_root/browser-units/Graph3D.pas" "$upstream_root/bin-net10/Lib/Graph3D.pas"
+graphics3d_bootstrap_dir="$repo_root/artifacts/graphics3d"
+reset_generated_directory "$graphics3d_bootstrap_dir"
+cp "$repo_root/tests/graphics/graph3d-basic.pas" "$graphics3d_bootstrap_dir/graph3d-basic.pas"
+"$dotnet_cmd" "$upstream_root/bin-net10/pabcnetc.dll" "$graphics3d_bootstrap_dir/graph3d-basic.pas" /rebuild /noconsole
+test -f "$upstream_root/bin-net10/Lib/Graph3D.pcu"
+
 asset_dir="$repo_root/src/PascalABC.Web.Runtime/wwwroot/pabc-assets"
 reset_generated_directory "$asset_dir"
 "$dotnet_cmd" run --project "$repo_root/tools/AssetStager/AssetStager.csproj" -c "$configuration" -- "$upstream_root/bin-net10" "$asset_dir"
