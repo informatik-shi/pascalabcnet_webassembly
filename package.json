@@ -20,7 +20,9 @@
     "THIRD_PARTY_NOTICES.md"
   ],
   "scripts": {
-    "build": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build.ps1",
+    "build": "node scripts/build.mjs",
+    "build:windows": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build.ps1",
+    "build:unix": "bash scripts/build.sh",
     "serve": "node scripts/serve-static.mjs . 8080"
   },
   "keywords": [

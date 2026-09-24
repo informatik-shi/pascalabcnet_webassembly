@@ -48,13 +48,23 @@ try {
         Assert-LastExitCode 'git submodule update'
     }
 
+    $savedErrorPreference = $ErrorActionPreference
+    $ErrorActionPreference = 'SilentlyContinue'
     git -C $upstreamRoot apply --ignore-space-change --check $browserPatch 2>$null
-    if ($LASTEXITCODE -eq 0) {
+    $patchCanApply = $LASTEXITCODE -eq 0
+    $ErrorActionPreference = $savedErrorPreference
+    if ($patchCanApply) {
         git -C $upstreamRoot apply --ignore-space-change $browserPatch
         Assert-LastExitCode 'PascalABC.NET browser patch'
     }
     else {
+        $ErrorActionPreference = 'SilentlyContinue'
         git -C $upstreamRoot apply --ignore-space-change --check --reverse $browserPatch 2>$null
+        $reversePatchIsValid = $LASTEXITCODE -eq 0
+        $ErrorActionPreference = $savedErrorPreference
+        if (-not $reversePatchIsValid) {
+            throw 'PascalABC.NET browser patch is neither cleanly applicable nor already applied.'
+        }
         Assert-LastExitCode 'PascalABC.NET browser patch validation'
         Write-Host 'PascalABC.NET browser patch is already applied.'
     }

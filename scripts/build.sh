@@ -5,7 +5,12 @@ repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 upstream_root="$repo_root/upstream/pascalabcnet"
 browser_patch="$repo_root/patches/pascalabcnet-browser.patch"
 configuration="${CONFIGURATION:-Release}"
-dotnet_cmd="${DOTNET_CMD:-dotnet}"
+if [[ -x "$repo_root/.dotnet/dotnet" ]]; then
+  dotnet_cmd="${DOTNET_CMD:-$repo_root/.dotnet/dotnet}"
+  export DOTNET_ROOT="${DOTNET_ROOT:-$repo_root/.dotnet}"
+else
+  dotnet_cmd="${DOTNET_CMD:-dotnet}"
+fi
 export DOTNET_CLI_HOME="${DOTNET_CLI_HOME:-$repo_root/.dotnet-home}"
 export NUGET_PACKAGES="${NUGET_PACKAGES:-$repo_root/.nuget/packages}"
 export DOTNET_CLI_TELEMETRY_OPTOUT=1

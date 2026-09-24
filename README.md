@@ -9,21 +9,26 @@ PascalABC.Web запускает **официальный PascalABC.NET compiler
 Требования для сборки: Git, .NET 10 SDK с workload `wasm-tools`, PowerShell 7+ (Windows) или Bash (Linux/macOS), Node.js только для локального static server.
 
 ```powershell
-git clone --recurse-submodules <repository-url> pascalabc-web
-cd pascalabc-web
+git clone --recurse-submodules https://github.com/informatik-shi/pascalabcnet_webassembly.git
+cd pascalabcnet_webassembly
 dotnet workload install wasm-tools
-./scripts/build.ps1
+npm run build
 npm run serve
 ```
 
 Откройте `http://127.0.0.1:8080/demo/`. После build обслуживаются только статические файлы; на production server Node.js/.NET/backend не нужны.
 
-Linux/macOS build:
+Linux/macOS или Git Bash: не запускайте `build.ps1` как Bash-скрипт. Универсальная команда `npm run build` сама выберет `build.sh` на Unix и PowerShell на Windows:
 
 ```bash
-bash scripts/build.sh
-node scripts/serve-static.mjs . 8080
+git clone --recurse-submodules https://github.com/informatik-shi/pascalabcnet_webassembly.git
+cd pascalabcnet_webassembly
+dotnet workload install wasm-tools
+npm run build
+npm run serve
 ```
+
+Если `npm run serve` уже запускается, вы, вероятно, уже находитесь в корне репозитория и повторный `cd pascalabcnet_webassembly` не нужен. Если `dotnet: command not found`, сначала установите .NET 10 SDK и откройте новый terminal; одной установки Node.js недостаточно.
 
 ## API
 
