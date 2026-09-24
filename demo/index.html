@@ -5,15 +5,26 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; worker-src 'self'; connect-src 'self'; style-src 'self'; img-src 'self' data:">
   <title>PascalABC.NET Web</title>
+  <script src="./theme.js"></script>
   <link rel="stylesheet" href="./style.css">
 </head>
 <body>
   <header>
-    <div><strong>PascalABC.NET Web</strong><span id="version">загрузка runtime…</span></div>
-    <nav><button id="mode-run" class="active">Запуск</button><button id="mode-task">Задание</button></nav>
+    <div class="brand">
+      <span class="brand-mark" aria-hidden="true">P</span>
+      <span class="brand-copy"><strong>PascalABC.NET Web</strong><span id="version">загрузка runtime…</span></span>
+    </div>
+    <div class="header-actions">
+      <nav aria-label="Режим работы"><button id="mode-run" class="active">Запуск</button><button id="mode-task">Задание</button></nav>
+      <button id="theme-toggle" class="theme-toggle" type="button" aria-pressed="false">
+        <span class="theme-toggle-icon" aria-hidden="true">☀</span>
+        <span id="theme-label">Светлая тема</span>
+        <span class="theme-toggle-track" aria-hidden="true"><span></span></span>
+      </button>
+    </div>
   </header>
   <main>
-    <section id="task" hidden>
+    <section id="task" class="task-card" hidden>
       <h2>Задание</h2>
       <p>Напишите программу, которая получает два целых числа и выводит их сумму.</p>
     </section>
@@ -32,12 +43,12 @@ end.</textarea></label>
       <button id="stop">■ Stop</button>
       <span id="status"></span>
     </div>
-    <section>
+    <section class="result-card">
       <h2>Вывод</h2>
       <pre id="output" aria-live="polite"></pre>
     </section>
-    <section id="diagnostics" hidden><h2>Диагностика</h2><ol></ol></section>
-    <section id="tests" hidden><h2>Тесты</h2><ol></ol></section>
+    <section id="diagnostics" class="result-card diagnostics-card" hidden><h2>Диагностика</h2><ol></ol></section>
+    <section id="tests" class="result-card tests-card" hidden><h2>Тесты</h2><ol></ol></section>
   </main>
   <script type="module" src="./app.js"></script>
 </body>
